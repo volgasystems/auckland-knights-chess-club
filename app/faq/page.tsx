@@ -1,0 +1,3 @@
+import PageShell from "@/components/PageShell";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
+export default async function FAQPage(){ const service=createSupabaseServiceClient(); const {data}=await service.from("faqs").select("*").eq("is_published",true).order("display_order",{ascending:true}); return <PageShell><main className="container-page py-12"><h1 className="text-4xl font-extrabold">F.A.Q.</h1><div className="mt-8 space-y-4">{(data||[]).map((f:any)=><details key={f.id} className="card p-5"><summary className="cursor-pointer text-lg font-bold">{f.question}</summary><p className="mt-3 leading-7 text-slate-700">{f.answer}</p></details>)}</div></main></PageShell> }

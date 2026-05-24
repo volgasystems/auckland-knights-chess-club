@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-akcc-navy: #050505;
+  --color-akcc-blue: #111827;
+  --color-akcc-royal: #000000;
+  --color-akcc-accent: #C89B2C;
+  --color-akcc-pale: #F5F5F4;
+  --color-akcc-gold: #C89B2C;
+  --shadow-soft: 0 14px 45px rgb(0 0 0 / 0.12);
+}
+
+:root {
+  --akcc-navy: #050505;
+  --akcc-blue: #111827;
+  --akcc-accent: #C89B2C;
+  --akcc-gold: #C89B2C;
+  --akcc-pale: #F5F5F4;
+}
+
+html { scroll-behavior: smooth; }
+body { background: #f5f5f4; color: #111827; }
+
+.chessboard-subtle {
+  background-image:
+    linear-gradient(45deg, rgba(0,0,0,.035) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0,0,0,.035) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0,0,0,.035) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0,0,0,.035) 75%);
+  background-size: 28px 28px;
+  background-position: 0 0, 0 14px, 14px -14px, -14px 0px;
+}
+
+@layer components {
+  .container-page { @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8; }
+  .card { @apply rounded-2xl border border-stone-200 bg-white shadow-soft; }
+  .btn-primary { @apply inline-flex items-center justify-center rounded-md bg-akcc-navy px-5 py-3 text-sm font-bold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-secondary { @apply inline-flex items-center justify-center rounded-md border border-akcc-navy bg-white px-5 py-3 text-sm font-bold text-akcc-navy transition hover:bg-stone-100; }
+  .btn-gold { @apply inline-flex items-center justify-center rounded-md bg-akcc-gold px-5 py-3 text-sm font-bold text-black transition hover:brightness-110; }
+  .input { @apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-akcc-gold focus:ring-2 focus:ring-akcc-gold/20; }
+  .label { @apply text-sm font-semibold text-stone-700; }
+  .admin-label { @apply text-xs font-bold uppercase tracking-wide text-stone-600; }
+  .admin-input { @apply w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-akcc-gold focus:outline-none focus:ring-2 focus:ring-akcc-gold/20; }
+  .prose-club p { @apply mb-4 leading-7 text-stone-700; }
+  .prose-club h2 { @apply mt-8 mb-3 text-2xl font-bold text-akcc-navy; }
+  .prose-club h3 { @apply mt-6 mb-2 text-xl font-bold text-akcc-navy; }
+}

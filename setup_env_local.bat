@@ -1,0 +1,44 @@
+@echo off
+setlocal EnableExtensions EnableDelayedExpansion
+cd /d "%~dp0"
+
+echo ============================================================
+echo  Auckland Knights Chess Club - .env.local Setup
+echo ============================================================
+echo This creates .env.local in: %cd%
+echo.
+
+if exist ".env.local" (
+  set /p OVERWRITE=Existing .env.local found. Type YES to overwrite: 
+  if /I not "!OVERWRITE!"=="YES" exit /b 0
+)
+
+set "NEXT_PUBLIC_SITE_URL=http://localhost:3000"
+set /p NEXT_PUBLIC_SUPABASE_URL=NEXT_PUBLIC_SUPABASE_URL: 
+set /p NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY optional: 
+set /p NEXT_PUBLIC_SUPABASE_ANON_KEY=NEXT_PUBLIC_SUPABASE_ANON_KEY: 
+set /p SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY: 
+set /p STRIPE_SECRET_KEY=STRIPE_SECRET_KEY, starts with sk_test_: 
+set /p STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET, starts with whsec_: 
+set /p RESEND_API_KEY=RESEND_API_KEY optional: 
+set /p CLUB_FROM_EMAIL=CLUB_FROM_EMAIL optional: 
+
+(
+ echo NEXT_PUBLIC_SITE_URL=%NEXT_PUBLIC_SITE_URL%
+ echo NEXT_PUBLIC_SUPABASE_URL=%NEXT_PUBLIC_SUPABASE_URL%
+ echo NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY%
+ echo NEXT_PUBLIC_SUPABASE_ANON_KEY=%NEXT_PUBLIC_SUPABASE_ANON_KEY%
+ echo SUPABASE_SERVICE_ROLE_KEY=%SUPABASE_SERVICE_ROLE_KEY%
+ echo STRIPE_SECRET_KEY=%STRIPE_SECRET_KEY%
+ echo STRIPE_WEBHOOK_SECRET=%STRIPE_WEBHOOK_SECRET%
+ echo RESEND_API_KEY=%RESEND_API_KEY%
+ echo CLUB_FROM_EMAIL=%CLUB_FROM_EMAIL%
+ echo NEXT_PUBLIC_SCHOOL_PUPIL_FEE_CENTS=7500
+ echo NEXT_PUBLIC_SCHOOL_PUPIL_TERM3_FEE_CENTS=5000
+ echo NEXT_PUBLIC_INDIVIDUAL_FEE_CENTS=12000
+ echo NEXT_PUBLIC_INDIVIDUAL_AFTER_JULY_FEE_CENTS=9000
+ echo NEXT_PUBLIC_ASSOCIATE_FEE_CENTS=6000
+) > .env.local
+
+echo Done. Now run: npm run dev
+pause

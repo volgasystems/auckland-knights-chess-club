@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="560" viewBox="0 0 1600 560">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#061322"/>
+      <stop offset="0.45" stop-color="#0B2345"/>
+      <stop offset="1" stop-color="#0B3D91"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="73%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+  <rect width="1600" height="560" fill="url(#bg)"/>
+  <rect width="1600" height="560" fill="url(#glow)"/>
+  <g transform="translate(820 120)" fill="#e5e7eb" opacity="0.85">
+    <path d="M420 300h130v45H305v-45h85v-54c-60-18-96-67-96-121 0-61 46-112 120-134 0 0 52-69 135-20-22 11-36 25-45 39 43 11 75 35 101 75-47-20-88-18-126 5 40 15 69 50 69 94 0 45-28 82-78 100v16z"/>
+    <rect x="338" y="345" width="215" height="34" rx="8"/>
+    <rect x="315" y="382" width="260" height="34" rx="8"/>
+  </g>
+  <g fill="#ffffff" opacity="0.24" filter="url(#soft)">
+    <circle cx="1160" cy="220" r="34"/><rect x="1138" y="250" width="44" height="150" rx="12"/><rect x="1100" y="395" width="120" height="35" rx="12"/>
+    <circle cx="1340" cy="250" r="28"/><rect x="1322" y="278" width="36" height="128" rx="10"/><rect x="1290" y="405" width="105" height="30" rx="10"/>
+    <circle cx="980" cy="270" r="26"/><rect x="963" y="295" width="34" height="120" rx="10"/><rect x="932" y="414" width="96" height="29" rx="10"/>
+  </g>
+  <g opacity="0.15" stroke="#ffffff" stroke-width="2">
+    <path d="M780 466h760"/><path d="M870 435l-70 31"/><path d="M1010 435l-45 31"/><path d="M1160 435l-15 31"/><path d="M1320 435l20 31"/><path d="M1485 435l58 31"/>
+  </g>
+</svg>
