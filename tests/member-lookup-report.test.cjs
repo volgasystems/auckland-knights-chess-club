@@ -12,10 +12,12 @@ test('tournament lookup returns unpaid, expired and cancelled member records', a
 });
 test('report keeps reference layout order and correctly shows paid, pending and waived balances', () => {
  const reports = load('lib/reports.ts');
- assert.equal(reports.selectedColumns('members',reports.DEFAULT_COLUMNS.members).map(c=>c.label).join('|'),'Name|Date Registered|Payable|Paid|Balance|Notes|Person ID|Status|Email');
+ assert.equal(reports.selectedColumns('members',reports.DEFAULT_COLUMNS.members).map(c=>c.label).join('|'),'Name|Date Registered|Payable|Paid|Balance|Member ID|Status|Email');
  const expected = {paid:['$80.00','$0.00'],manual_paid:['$80.00','$0.00'],pending_payment:['$0.00','$80.00'],waived:['$0.00','$0.00']};
  for (const [status,[paid,balance]] of Object.entries(expected)) {
   const row = reports.rowsForColumns([{total_amount_cents:8000,payment_status:status}], 'members', reports.DEFAULT_COLUMNS.members)[0];
   assert.equal(row.Paid,paid); assert.equal(row.Balance,balance);
  }
 });
+
+test("pending status has a short display label without changing stored values",()=> { const r=load("lib/reports.ts"); assert.equal(r.memberStatusLabel("pending_payment"),"Pending"); assert.equal(r.rowsForColumns([{membership_id:"AKCC01001",membership_status:"pending_payment"}],"members",r.DEFAULT_COLUMNS.members)[0]["Member ID"],"AKCC01001"); });
