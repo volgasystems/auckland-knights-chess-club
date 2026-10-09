@@ -15,11 +15,12 @@ import { formatDate } from "@/lib/format";
 
 export default async function HomePage() {
   const service = createSupabaseServiceClient();
-  const [{ data: tournaments }, { data: news }, { data: settings }, { data: galleryPhotos }] = await Promise.all([
+  const [{ data: tournaments }, { data: news }, { data: settings }, { data: galleryPhotos }, { data: membershipOptions }] = await Promise.all([
     service.from("tournaments").select("*").eq("tournament_type", "general_open").in("status", ["open", "closed"]).order("start_date", { ascending: true }).limit(9),
     service.from("news_posts").select("*").eq("is_published", true).order("published_at", { ascending: false }).limit(3),
     service.from("club_settings").select("*").eq("id", "default").maybeSingle(),
-    service.from("gallery_photos").select("*").eq("is_published", true).order("event_date", { ascending: false }).order("created_at", { ascending: false })
+    service.from("gallery_photos").select("*").eq("is_published", true).order("event_date", { ascending: false }).order("created_at", { ascending: false }),
+    service.from("membership_options").select("key,name,fee_cents,validity_months,valid_until_month").eq("is_active", true).order("display_order", { ascending: true })
   ]);
   const mapAddress = settings?.club_address || "East Auckland, New Zealand";
   const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapAddress)}&output=embed`;
@@ -28,7 +29,7 @@ export default async function HomePage() {
     <Hero />
     <FeatureStrip />
     <main className="container-page py-10">
-      <MembershipRenewal member={null} options={[]} />
+      <MembershipRenewal member={null} options={membershipOptions || []} />
       <div className="grid gap-8 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between gap-4">

@@ -19,3 +19,20 @@ export function recoveryClaim(email: string, now = Date.now()) {
   const hex = createHmac("sha256", key()).update(`member-recovery:${email}:${Math.floor(now / 60000)}`).digest("hex").slice(0, 32);
   return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
 }
+
+// Public lookup can authorize payment only; it never grants access to private member fields.
+export function memberCheckoutToken(member: { id: string }, now = Date.now()) {
+  const payload = Buffer.from(JSON.stringify({ id: member.id, expires: now + 30 * 60 * 1000, scope: "membership-checkout" })).toString("base64url");
+  return `${payload}.${createHmac("sha256", key()).update(payload).digest("base64url")}`;
+}
+export function readMemberCheckoutToken(token: unknown, now = Date.now()) {
+  try {
+    if (typeof token !== "string" || token.length > 2000) return null;
+    const [payload, signature, extra] = token.split("."); if (!payload || !signature || extra) return null;
+    const expected = createHmac("sha256", key()).update(payload).digest(); const actual = Buffer.from(signature, "base64url");
+    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return null;
+    const value = JSON.parse(Buffer.from(payload, "base64url").toString());
+    if (value.scope !== "membership-checkout" || typeof value.id !== "string" || !Number.isFinite(value.expires) || value.expires <= now) return null;
+    return value as { id: string };
+  } catch { return null; }
+}
