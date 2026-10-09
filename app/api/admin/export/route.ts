@@ -18,11 +18,12 @@ async function getRows(type: ReportType, role: string, params: FilterParams) {
     if (!canAccess(role, "members")) throw new Error("Permission denied");
     let q = s.from("club_memberships").select("*");
     q = applyMemberSearch(q, params.get("search"));
+    if (params.get("reference")) q = q.ilike("membership_id", String(params.get("reference")).trim().replace(/[\\%_]/g, "\\$&"));
     const memberStatus = params.get("membership_status");
     if (memberStatus) q = q.eq("membership_status", memberStatus);
     const paymentStatus = params.get("payment_status");
     const membershipType = params.get("membership_type");
-    const sort = params.get("sort") || "created_at_desc";
+    const sort = params.get("sort") || "name";
     if (paymentStatus) q = q.eq("payment_status", paymentStatus);
     if (membershipType) q = q.contains("membership_options", [{ key: membershipType }]);
     if (sort === "name") q = q.order("last_name").order("first_name");
