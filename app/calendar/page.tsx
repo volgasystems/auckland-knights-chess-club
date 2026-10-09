@@ -5,7 +5,7 @@ import PageShell from "@/components/PageShell";
 import Link from "next/link";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { formatMoney } from "@/lib/format";
-import { displayRatingFormat, displayRatingType, displayTournamentSystem } from "@/lib/tournamentOptions";
+import { displayRatingFormat, displayRatingType, displayTournamentSystem, tournamentRounds } from "@/lib/tournamentOptions";
 
 function dateLabel(t: any) {
   if (t.date_display) return t.date_display;
@@ -65,7 +65,7 @@ export default async function CalendarPage(){
                   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-stone-700">
                     {t.rating_format && <span>{displayRatingFormat(t)}</span>}
                     {(t.time_control || t.custom_time_control) && <span>{t.time_control || t.custom_time_control}</span>}
-                    {t.rounds ? <span>{t.rounds} rounds</span> : null}
+                    {tournamentRounds(t) ? <span>{tournamentRounds(t)} rounds</span> : null}
                     {(t.tournament_system || t.tournament_format) && <span>{displayTournamentSystem(t)}</span>}
                     {t.rating_type && <span>{displayRatingType(t)}</span>}
                     {t.venue_name && <span>{t.venue_name}</span>}

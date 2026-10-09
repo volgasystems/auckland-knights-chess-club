@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/auth";
 import { canAccessTable } from "@/lib/roles";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { tournamentRounds } from "@/lib/tournamentOptions";
 import { slugify } from "@/lib/format";
 
 const allowed = new Set(["news_posts","tournaments","gallery_photos","faqs","coaches","coaching_topics","agm_meetings","agm_decisions","elected_team_members","club_settings","absences","social_posts","live_board_links","membership_options","contact_enquiries","email_templates","member_notices"]);
@@ -59,6 +60,7 @@ export async function POST(req: Request){
   });
   if(table==='news_posts' && clean.title && !clean.slug) clean.slug=slugify(clean.title);
   if(table==='news_posts' && clean.is_published && !clean.published_at) clean.published_at=new Date().toISOString();
+  if(table==='tournaments' && (Object.prototype.hasOwnProperty.call(clean, 'rounds_display') || Object.prototype.hasOwnProperty.call(clean, 'rounds'))) clean.rounds = tournamentRounds(clean);
   if(table==='tournaments' && clean.title && !clean.slug) clean.slug=slugify(clean.title);
   if(table==='gallery_photos' && clean.is_published && !clean.event_date) clean.event_date=new Date().toISOString().slice(0,10);
   if(table==='social_posts' && clean.title && !clean.status) clean.status='draft';
