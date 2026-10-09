@@ -21,7 +21,7 @@ export default async function AGMAdmin() {
       { name: "title", label: "Meeting title", required: true },
       { name: "meeting_date", label: "Meeting date", type: "date" },
       { name: "venue", label: "Venue / online link" },
-      { name: "summary", label: "Meeting summary", textarea: true, help: "Use blank lines between paragraphs. Markdown is supported: ## Heading, **bold**, numbered/bullet lists and tables. Paste the minutes once, then save." },
+      { name: "summary", label: "Meeting summary", type: "richtext", help: "Use the formatting toolbar and review the notice before publishing." },
       { name: "is_published", label: "Publish AGM notice", type: "checkbox" },
     ]} />
     {choices.length ? <>
@@ -29,7 +29,7 @@ export default async function AGMAdmin() {
       <CrudManager table="agm_decisions" title="Decisions Made" rows={decisions.data || []} meetingLabels={meetingLabels} fields={[
         meetingField,
         { name: "title", label: "Decision title", required: true },
-        { name: "description", label: "Decision details", textarea: true },
+        { name: "description", label: "Decision details", type: "richtext" },
         { name: "outcome", label: "Outcome", options: ["Approved", "Rejected", "Deferred", "Withdrawn"] },
         { name: "proposed_by", label: "Proposed by" },
         { name: "seconded_by", label: "Seconded by" },

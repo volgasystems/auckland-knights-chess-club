@@ -12,7 +12,7 @@ export default async function NewsAdmin(){
     {name:'slug',label:'Slug - optional, auto generated if blank'},
     {name:'summary',label:'Short summary',textarea:true},
     {name:'image_url',label:'News image',type:'image',imageBucket:'news-images'},
-    {name:'content',label:'News content',textarea:true,required:true},
+    {name:'content',label:'News content',type: "richtext",required:true},
     {name:'is_published',label:'Publish this news post',type:'checkbox'},
     {name:'published_at',label:'Published date',type:'date'}
   ];
