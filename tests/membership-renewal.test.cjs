@@ -40,7 +40,7 @@ test('immediate search populates family memberships without email or private det
  db.tables.club_memberships=[member,{...member,id:randomUUID(),membership_id:'AKCC01009',membership_status:'active'},{...member,id:randomUUID(),membership_id:'AKCC01010',membership_status:'cancelled'}];
  const route=load('app/api/membership/search/route.ts',{'@/lib/supabase/service':{createSupabaseServiceClient:()=>db}});
  const request=body=>new Request('https://example.invalid',{method:'POST',body:JSON.stringify(body)});
- const response=await route.POST(request({email:member.email,surname:'Player'}));const result=await response.json();assert.equal(response.status,200);assert.equal(result.members.length,2);assert.equal(result.members[0].membership_id,member.membership_id);assert.equal(result.members[0].option_key,'school_pupil');assert.equal(db.tables.email_delivery_logs.length,0);
+ const response=await route.POST(request({email:member.email,surname:'Player'}));const result=await response.json();assert.equal(response.status,200);assert.equal(result.members.length,3);assert.equal(result.members[0].membership_id,member.membership_id);assert.equal(result.members[0].option_key,'school_pupil');assert.equal(db.tables.email_delivery_logs.length,0);
  for(const field of ['email','phone','date_of_birth','street_address','id'])assert.equal(Object.hasOwn(result.members[0],field),false);
  const token=result.members[0].checkout_token;assert.equal(a.readMemberCheckoutToken(token).id,member.id);assert.equal(a.readMemberAccessToken(token),null);assert.ok(!Buffer.from(token.split('.')[0],'base64url').toString().includes(member.email));
  const byId=await route.POST(request({membership_id:'akcc01009'}));assert.equal((await byId.json()).members.length,1);
@@ -61,4 +61,10 @@ test('checkout-only access reaches renewal validation for its member without ema
  const route=load('app/api/membership/renew/route.ts',{'@/lib/supabase/service':{createSupabaseServiceClient:()=>db},'@/lib/stripe':{getStripe(){throw Error('must not create payment for invalid option');}}});
  const req=()=>new Request('https://example.invalid',{method:'POST',body:JSON.stringify({member_token:a.memberCheckoutToken(member),option_key:'unavailable',terms_accepted:true})});
  assert.equal((await route.POST(req())).status,400);db.tables.club_memberships[0].membership_status='cancelled';assert.equal((await route.POST(req())).status,403);
+});
+
+test('member search includes all statuses and records without IDs but grants renewal only to eligible paid members',async()=>{
+ const db=new FakeDB();const statuses=['pending_payment','failed','expired','refunded','paid'];db.tables.club_memberships=statuses.map((status,i)=>({id:randomUUID(),email:'all@example.invalid',first_name:'Player',last_name:'Family',payment_status:status,membership_status:status==='paid'?'cancelled':'pending_payment',membership_id:i===0?null:'AKCC'+i}));
+ const route=load('app/api/membership/search/route.ts',{'@/lib/supabase/service':{createSupabaseServiceClient:()=>db}});
+ const response=await route.POST(new Request('https://example.invalid',{method:'POST',body:JSON.stringify({email:'all@example.invalid'})}));const body=await response.json();assert.equal(body.members.length,5);assert.equal(body.members[0].membership_id,'Not assigned yet');assert.ok(body.members.every(m=>!m.checkout_token));assert.deepEqual(body.members.map(m=>m.payment_status),statuses);
 });
