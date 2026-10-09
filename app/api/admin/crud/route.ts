@@ -5,7 +5,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { tournamentRounds } from "@/lib/tournamentOptions";
 import { slugify } from "@/lib/format";
 
-const allowed = new Set(["news_posts","tournaments","gallery_photos","faqs","coaches","coaching_topics","agm_meetings","agm_decisions","elected_team_members","club_settings","absences","social_posts","live_board_links","membership_options","contact_enquiries","email_templates","member_notices"]);
+const allowed = new Set(["payment_accounts","news_posts","tournaments","gallery_photos","faqs","coaches","coaching_topics","agm_meetings","agm_decisions","elected_team_members","club_settings","absences","social_posts","live_board_links","membership_options","contact_enquiries","email_templates","member_notices"]);
 const numericFields = new Set(["tournament_year","rounds","entry_fee_cents","max_players","display_order","nzcf_rating","fide_rating","fee_cents","validity_months","valid_until_month"]);
 const booleanFields = new Set(["is_published","allow_public_registration","allow_non_members","require_payment","show_public_entries","publish_to_social","is_active","show_in_calendar","publish_as_news"]);
 
@@ -53,6 +53,19 @@ export async function POST(req: Request){
   const s=createSupabaseServiceClient();
   const clean:any={...payload, updated_at:new Date().toISOString()};
 
+  if (table === "payment_accounts" && ['create','update'].includes(action)) {
+    for (const key of Object.keys(clean)) if (!["name", "code", "account_number", "purpose", "is_active", "updated_at"].includes(key)) delete clean[key];
+    for (const key of ["name", "code", "account_number", "purpose"]) clean[key] = String(clean[key] || "").trim();
+    if (!clean.name || !clean.code || !clean.account_number || !clean.purpose || Object.values(clean).some(v => typeof v === "string" && v.length > 500)) return NextResponse.json({error:"Account name, code, number and purpose are required (maximum 500 characters each)."}, {status:400});
+  }
+  if (table === "tournaments" && clean.payment_account_id && ['create','update'].includes(action)) {
+    const {data: account} = await s.from("payment_accounts").select("id,is_active").eq("id", clean.payment_account_id).maybeSingle();
+    if (!account) return NextResponse.json({error:"Select an existing payment account."}, {status:400});
+    if (!account.is_active) {
+      const {data: existing} = await s.from("tournaments").select("payment_account_id").eq("id", id || "00000000-0000-0000-0000-000000000000").maybeSingle();
+      if (existing?.payment_account_id !== account.id) return NextResponse.json({error:"Select an active payment account."}, {status:400});
+    }
+  }
   if (table === "club_settings") {
     // Only the dedicated numbering RPC can change these; stale settings forms cannot reset the counter.
     for (const field of ["membership_id_prefix", "membership_id_start", "membership_id_next", "membership_id_digits"]) delete clean[field];
@@ -85,7 +98,7 @@ export async function POST(req: Request){
 
   if(action==='create'){
     if(table==='club_settings') clean.id='default';
-    if(!['membership_options','agm_decisions','elected_team_members'].includes(table)) clean.created_by=admin.user.id;
+    if(!['payment_accounts','membership_options','agm_decisions','elected_team_members'].includes(table)) clean.created_by=admin.user.id;
     const {data,error}=await s.from(table).insert(clean).select().single();
     if(error) return NextResponse.json({error:error.message},{status:400});
     await maybeCreateSocialDraft(s, table, data, clean, admin.user.id);

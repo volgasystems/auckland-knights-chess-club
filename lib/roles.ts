@@ -28,7 +28,7 @@ export const ROLE_LABELS: Record<Role, string> = {
 export type AdminArea =
   | "dashboard" | "documentation" | "users" | "settings" | "news" | "tournaments" | "results"
   | "members" | "tournament_registrations" | "gallery" | "faq" | "coaching"
-  | "agm" | "absences" | "payments" | "social_posts" | "live_boards"
+  | "payment_accounts" | "agm" | "absences" | "payments" | "social_posts" | "live_boards"
   | "membership_options" | "calendar" | "reports" | "enquiries" | "member_notices" | "email_templates" | "bulk_email" | "email_diagnostics";
 
 export const AREA_LABELS: Record<AdminArea, string> = {
@@ -47,6 +47,7 @@ export const AREA_LABELS: Record<AdminArea, string> = {
   agm: "AGM & Notices",
   absences: "Absence Reports",
   payments: "Payments",
+  payment_accounts: "Payment Accounts",
   social_posts: "Social Posts",
   live_boards: "Live Boards",
   membership_options: "Membership Options",

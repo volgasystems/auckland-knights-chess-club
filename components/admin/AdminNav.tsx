@@ -14,6 +14,7 @@ const items = [
   ["calendar", "/club-admin/calendar", "Calendar"],
   ["tournament_registrations", "/club-admin/tournament-registrations", "Tournament Registrations"],
   ["results", "/club-admin/results", "Results"],
+  ["payment_accounts", "/club-admin/accounts", "Payment Accounts"],
   ["news", "/club-admin/news", "News"],
   ["social_posts", "/club-admin/social-posts", "Social Posts"],
   ["member_notices", "/club-admin/member-notices", "Member Notices"],

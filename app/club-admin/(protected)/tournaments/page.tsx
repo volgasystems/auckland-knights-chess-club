@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { paymentAccountFields } from "@/lib/paymentAccounts";
 import CrudManager from "@/components/admin/CrudManager";
 import { canUseSocialMedia } from "@/lib/roles";
 import { RATING_FORMAT_OPTIONS, RATING_TYPE_OPTIONS, ROUND_OPTIONS, TIME_CONTROL_OPTIONS, TOURNAMENT_SYSTEM_OPTIONS } from "@/lib/tournamentOptions";
@@ -7,6 +8,7 @@ import { RATING_FORMAT_OPTIONS, RATING_TYPE_OPTIONS, ROUND_OPTIONS, TIME_CONTROL
 export default async function TournamentsAdmin(){
   const admin = await requireAdmin("tournaments");
   const s=createSupabaseServiceClient();
+  const accountFields = await paymentAccountFields(s);
   const {data}=await s.from("tournaments").select("*").order("start_date",{ascending:false});
   const fields:any[] = [
     {name:'title',label:'Tournament name',required:true},
@@ -17,8 +19,9 @@ export default async function TournamentsAdmin(){
     {name:'show_in_calendar',label:'Show in Calendar',type:'checkbox'},
     {name:'tournament_year',label:'Year',type:'number',help:'Example: 2026. This can be derived from the start date, but you can override it.'},
     {name:'date_display',label:'Date display text',help:'Examples: Mar 23 – May 18; May 25 and June 8; Jan 24 – Jan 26; Every Monday from Feb 2 to Mar 16'},
-    {name:'start_date',label:'Start Date',type:'date'},
-    {name:'end_date',label:'End Date',type:'date'},
+    {name:'start_date',label:'Start date/time (your local timezone)',type:'datetime-local'},
+    {name:'end_date',label:'End date/time (your local timezone)',type:'datetime-local'},
+    ...accountFields,
     {name:'venue_name',label:'Venue name'},
     {name:'venue_address',label:'Venue address',type:'address',help:'Use Search NZ address below to autocomplete the venue address.'},
     {name:'rating_format',label:'Rating format',options:RATING_FORMAT_OPTIONS,help:'Classical, Rapid, Blitz, etc.'},
@@ -37,7 +40,7 @@ export default async function TournamentsAdmin(){
     {name:'registration_close_at',label:'Registration close date',type:'date'},
     {name:'allow_public_registration',label:'Allow public registration',type:'checkbox'},
     {name:'show_public_entries',label:'Show public entries',type:'checkbox'},
-    {name:'vega_url',label:'Vega URL'},
+    {name:'vega_url',label:'Results URL (Vega or other)' },
     {name:'lichess_url',label:'Lichess live board / broadcast URL'},
     {name:'pgn_url',label:'PGN URL'},
     {name:'winner_photo_url',label:'Winner photo',type:'image',imageBucket:'winner-images'},
