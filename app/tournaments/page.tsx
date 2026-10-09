@@ -36,6 +36,7 @@ export default async function TournamentsPage() {
           <h2 className="mb-6 text-3xl font-extrabold">{year} Tournaments</h2>
           <div className="space-y-9">
             {(byYear.get(year)||[]).map((t:any)=><article key={t.id}>
+              {(t.tournament_image_url || t.image_url) && <Link href={`/tournaments/${t.slug}`} className="mb-4 block"><img src={t.tournament_image_url || t.image_url} alt={`${t.title} tournament banner`} className="h-auto max-h-[640px] w-full rounded-xl bg-stone-50 object-contain" loading="lazy" /></Link>}
               <h3 className="text-xl font-extrabold"><Link href={`/tournaments/${t.slug}`} className="hover:text-amber-700">{t.title}</Link> <span className="font-normal text-stone-700">{t.date_display ? `(${t.date_display})` : t.start_date ? `(${formatDate(t.start_date)})` : ""}</span></h3>
               {(t.rating_format || t.time_control || t.custom_time_control || t.rounds || t.tournament_system || t.tournament_format || t.rating_type) && <div className="mt-2 space-y-1 text-lg text-stone-800">
                 <p>{displayRatingFormat(t)}{t.time_control || t.custom_time_control ? ` · ${t.time_control || t.custom_time_control}` : ""}</p>
