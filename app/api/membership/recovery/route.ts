@@ -11,7 +11,12 @@ export async function POST(req: Request) {
     if ((!email && !membershipId) || email.length > 254 || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) || surname.length > 100 || membershipId.length > 64) return NextResponse.json({ error: "Enter your membership ID or registered email. Surname is optional." }, { status: 400 });
     const s = createSupabaseServiceClient(); service = s; const claim = recoveryClaim(email || `id:${membershipId}`); deliveryId = claim;
     const { error: claimError } = await s.from("email_delivery_logs").insert({ id: claim, recipient_email: email || "Membership ID lookup", recipient_name: "Membership lookup", status: "queued" });
-    if (claimError?.code === "23505") { deliveryId = ""; return NextResponse.json({ message: "Please check your inbox or wait one minute before requesting another link." }); }
+    if (claimError?.code === "23505") {
+      deliveryId = "";
+      const { data: previous } = await s.from("email_delivery_logs").select("status").eq("id", claim).maybeSingle();
+      if (previous?.status === "failed") return NextResponse.json({ error: "The previous lookup email failed. Use Find Membership to continue without email, or contact the club." }, { status: 503 });
+      return NextResponse.json({ message: "A previous request is being processed or was sent. Wait one minute before requesting another email. You can use Find Membership without email." });
+    }
     if (claimError) throw claimError;
     let query = s.from("club_memberships").select("id,email,membership_id").in("payment_status", ["paid", "manual_paid", "waived"]).neq("membership_status", "cancelled");
     if (email) query = query.ilike("email", email.replace(/[\\%_]/g, "\\$&"));

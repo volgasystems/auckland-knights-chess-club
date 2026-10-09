@@ -35,3 +35,30 @@ test('membership ID lookup sends only to the stored address and keeps details pr
  assert.equal((await route.POST(request({surname:'Player'}))).status,400);
  const mismatch=await route.POST(request({membership_id:member.membership_id,email:'other@example.invalid'}));assert.equal(mismatch.status,200);assert.equal(sends.length,1);
 });
+test('immediate search populates family memberships without email or private details and includes expired members',async()=>{
+ const a=load('lib/membershipAccess.ts');const db=new FakeDB();const member={id:randomUUID(),email:'family@example.invalid',first_name:'First',last_name:'Player',membership_id:'AKCC01008',payment_status:'paid',membership_status:'expired',membership_end_date:'2025-12-31',membership_options:[{key:'school_pupil'}],phone:'private-phone',date_of_birth:'2010-01-01',street_address:'private-address'};
+ db.tables.club_memberships=[member,{...member,id:randomUUID(),membership_id:'AKCC01009',membership_status:'active'},{...member,id:randomUUID(),membership_id:'AKCC01010',membership_status:'cancelled'}];
+ const route=load('app/api/membership/search/route.ts',{'@/lib/supabase/service':{createSupabaseServiceClient:()=>db}});
+ const request=body=>new Request('https://example.invalid',{method:'POST',body:JSON.stringify(body)});
+ const response=await route.POST(request({email:member.email,surname:'Player'}));const result=await response.json();assert.equal(response.status,200);assert.equal(result.members.length,2);assert.equal(result.members[0].membership_id,member.membership_id);assert.equal(result.members[0].option_key,'school_pupil');assert.equal(db.tables.email_delivery_logs.length,0);
+ for(const field of ['email','phone','date_of_birth','street_address','id'])assert.equal(Object.hasOwn(result.members[0],field),false);
+ const token=result.members[0].checkout_token;assert.equal(a.readMemberCheckoutToken(token).id,member.id);assert.equal(a.readMemberAccessToken(token),null);assert.ok(!Buffer.from(token.split('.')[0],'base64url').toString().includes(member.email));
+ const byId=await route.POST(request({membership_id:'akcc01009'}));assert.equal((await byId.json()).members.length,1);
+ const mismatch=await route.POST(request({membership_id:'AKCC01009',email:'wrong@example.invalid'}));assert.equal((await mismatch.json()).members.length,0);
+ assert.equal((await route.POST(request({surname:'Player'}))).status,400);
+});
+test('checkout-only tokens expire, reject tampering and cannot grant private profile access',()=>{
+ const a=load('lib/membershipAccess.ts');const token=a.memberCheckoutToken({id:randomUUID()},1000);
+ assert.ok(a.readMemberCheckoutToken(token,1001));assert.equal(a.readMemberCheckoutToken(token,1801000),null);assert.equal(a.readMemberCheckoutToken(token+'x',1001),null);assert.equal(a.readMemberAccessToken(token,1001),null);
+});
+test('failed recovery request reports failure instead of asking member to check inbox',async()=>{
+ const db=new FakeDB();const a=load('lib/membershipAccess.ts');const email='failed@example.invalid';db.tables.email_delivery_logs=[{id:a.recoveryClaim(email),status:'failed'}];
+ const route=load('app/api/membership/recovery/route.ts',{'@/lib/supabase/service':{createSupabaseServiceClient:()=>db}});
+ const result=await route.POST(new Request('https://example.invalid',{method:'POST',body:JSON.stringify({email})}));assert.equal(result.status,503);assert.match((await result.json()).error,/previous lookup email failed/);
+});
+test('checkout-only access reaches renewal validation for its member without email verification and rejects cancellation',async()=>{
+ const a=load('lib/membershipAccess.ts');const db=new FakeDB();const member={id:randomUUID(),email:'private@example.invalid',membership_id:'AKCC01011',payment_status:'paid',membership_status:'expired'};db.tables.club_memberships=[member];
+ const route=load('app/api/membership/renew/route.ts',{'@/lib/supabase/service':{createSupabaseServiceClient:()=>db},'@/lib/stripe':{getStripe(){throw Error('must not create payment for invalid option');}}});
+ const req=()=>new Request('https://example.invalid',{method:'POST',body:JSON.stringify({member_token:a.memberCheckoutToken(member),option_key:'unavailable',terms_accepted:true})});
+ assert.equal((await route.POST(req())).status,400);db.tables.club_memberships[0].membership_status='cancelled';assert.equal((await route.POST(req())).status,403);
+});

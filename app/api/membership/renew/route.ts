@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { readMemberAccessToken } from "@/lib/membershipAccess";
+import { readMemberAccessToken, readMemberCheckoutToken } from "@/lib/membershipAccess";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getStripe } from "@/lib/stripe";
 import { assertPaymentReady, paymentConfiguration } from "@/lib/paymentConfig";
 export async function POST(req: Request) {
   let renewalId = ""; let sessionId = ""; let s: any;
   try {
-    const body = await req.json(); const access = readMemberAccessToken(body.member_token);
-    if (!access) return NextResponse.json({ error: "Your renewal link has expired or is invalid. Request another link from Join Now." }, { status: 401 });
+    const body = await req.json(); const access = readMemberAccessToken(body.member_token); const checkoutAccess = readMemberCheckoutToken(body.member_token);
+    if (!access && !checkoutAccess) return NextResponse.json({ error: "Your renewal session has expired or is invalid. Search for your membership again on Join Now." }, { status: 401 });
     if (!body.terms_accepted) return NextResponse.json({ error: "Accept the membership terms to continue." }, { status: 400 });
     s = createSupabaseServiceClient();
-    const { data: member, error } = await s.from("club_memberships").select("*").eq("id", access.id).single();
-    if (error || !member || member.email.toLowerCase() !== access.email || !member.membership_id || member.membership_status === "cancelled" || !["paid","manual_paid","waived"].includes(member.payment_status)) return NextResponse.json({ error: "This membership requires club assistance before renewal." }, { status: 403 });
+    const { data: member, error } = await s.from("club_memberships").select("*").eq("id", (access || checkoutAccess)!.id).single();
+    if (error || !member || (access && member.email.toLowerCase() !== access.email) || !member.membership_id || member.membership_status === "cancelled" || !["paid","manual_paid","waived"].includes(member.payment_status)) return NextResponse.json({ error: "This membership requires club assistance before renewal." }, { status: 403 });
     const { data: option, error: optionError } = await s.from("membership_options").select("*").eq("key", body.option_key).eq("is_active", true).single();
     if (optionError || !option || !Number.isInteger(option.fee_cents) || option.fee_cents <= 0) return NextResponse.json({ error: "Select an available membership fee. Contact the club for free or waived renewals." }, { status: 400 });
     assertPaymentReady(); const stripe = getStripe();
