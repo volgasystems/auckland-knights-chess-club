@@ -27,3 +27,11 @@ test('public lookup emails matching family IDs without disclosing records in the
  const route=load('app/api/membership/recovery/route.ts',{'@/lib/supabase/service':{createSupabaseServiceClient:()=>db},'@/lib/email':{sendEmail:async m=>sends.push(m)}});
  const req=()=>new Request('https://example.invalid',{method:'POST',body:JSON.stringify({email:member.email,surname:'Player'})});const response=await route.POST(req());const body=await response.json();assert.equal(response.status,200);assert.equal(sends.length,1);assert.ok(sends[0].text.includes('AKCC01001'));assert.ok(sends[0].text.includes('AKCC01002'));assert.ok(!JSON.stringify(body).includes('AKCC01001'));await route.POST(req());assert.equal(sends.length,1);
 });
+test('membership ID lookup sends only to the stored address and keeps details private',async()=>{
+ const db=new FakeDB();const member={id:randomUUID(),email:'registered@example.invalid',membership_id:'AKCC01003',last_name:'Player',payment_status:'paid',membership_status:'active'};db.tables.club_memberships=[member];let sends=[];
+ const route=load('app/api/membership/recovery/route.ts',{'@/lib/supabase/service':{createSupabaseServiceClient:()=>db},'@/lib/email':{sendEmail:async m=>sends.push(m)}});
+ const request=body=>new Request('https://example.invalid',{method:'POST',body:JSON.stringify(body)});
+ const result=await route.POST(request({membership_id:'akcc01003'}));assert.equal(result.status,200);assert.equal(sends.length,1);assert.equal(sends[0].to,member.email);assert.ok(!JSON.stringify(await result.json()).includes(member.email));
+ assert.equal((await route.POST(request({surname:'Player'}))).status,400);
+ const mismatch=await route.POST(request({membership_id:member.membership_id,email:'other@example.invalid'}));assert.equal(mismatch.status,200);assert.equal(sends.length,1);
+});
