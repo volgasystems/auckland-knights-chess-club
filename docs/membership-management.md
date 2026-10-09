@@ -10,7 +10,7 @@ In Admin > Club Settings > Membership ID Numbering, use prefix `AKCC`, starting 
 
 ## Member search
 
-Admin > Members searches by exact membership ID or email, case-insensitively. Clear payment/membership-status filters to include pending, expired and cancelled records. Shared family email addresses can return multiple player records. CSV/PDF exports use the same search and status filters. The public tournament membership lookup continues to require an active paid membership.
+Admin > Members searches by player name, exact membership ID or email, case-insensitively. Names support partial matches and multiple words (first and last names). Clear payment/membership-status filters to include pending, expired and cancelled records. Shared family email addresses can return multiple player records. CSV/PDF exports use the same search and status filters. The public tournament membership lookup continues to require an active paid membership.
 
 ## Emails
 
