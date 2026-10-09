@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { suggestNZPost, detailsNZPost } from "@/lib/nzpostAddress";
 
 type NormalisedAddress = {
   display: string;
@@ -75,8 +76,19 @@ async function searchNominatim(query: string) {
 
 export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.get("q")?.trim() || "";
+  const provider = (process.env.ADDRESS_PROVIDER || (process.env.NZPOST_CLIENT_ID ? "nzpost" : "addy")).toLowerCase();
+  if (provider === "nzpost") {
+    const dpid = req.nextUrl.searchParams.get("dpid");
+    if ((dpid !== null && !/^\d{1,20}$/.test(dpid)) || query.length > 200) return NextResponse.json({ error: "Invalid address search" }, { status: 400 });
+    if (dpid === null && query.length < 3) return NextResponse.json({ results: [] });
+    try {
+      const payload = dpid !== null ? { address: await detailsNZPost(dpid) } : { results: await suggestNZPost(query) };
+      return NextResponse.json({ ...payload, provider: "nzpost" }, { headers: { "Cache-Control": "no-store" } });
+    } catch {
+      return NextResponse.json({ results: [], error: "Address lookup is unavailable. Please type the address manually." }, { status: 503, headers: { "Cache-Control": "no-store" } });
+    }
+  }
   if (query.length < 3) return NextResponse.json({ results: [] });
-  const provider = (process.env.ADDRESS_PROVIDER || "addy").toLowerCase();
 
   try {
     let results: NormalisedAddress[] | null = null;
