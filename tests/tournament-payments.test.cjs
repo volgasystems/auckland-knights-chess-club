@@ -14,7 +14,7 @@ process.env.STRIPE_WEBHOOK_SECRET = 'whsec_fixture';
 function fixture() {
   const id = randomUUID(), tid = randomUUID();
   const entry = { id, tournament_id: tid, first_name: 'Test', last_name: 'Player', email: 'test@example.invalid', phone: 'test', entry_fee_cents: 2000, category_name: 'Open', payment_status: 'pending_payment', registration_status: 'pending_payment', stripe_checkout_session_id: 'cs_live_fixture' };
-  const tournament = { id: tid, title: 'Fixture tournament', status: 'open', allow_public_registration: true, entry_fee_cents: 2000, category_options: [], max_players: 80 };
+  const tournament = { id: tid, title: 'Fixture tournament', tournament_type:'general_open', status: 'open', allow_public_registration: true, entry_fee_cents: 2000, category_options: [], max_players: 80 };
   const session = { id: 'cs_live_fixture', mode: 'payment', status: 'complete', payment_status: 'paid', livemode: true, currency: 'nzd', amount_total: 2000, payment_intent: 'pi_fixture', metadata: { type: 'tournament_registration', registration_id: id, tournament_id: tid } };
   let sends = [], failEmail = false;
   const payment = load('lib/tournamentPayment.ts', { '@/lib/email': { sendEmail: async input => { if (failEmail) throw Error('Email unavailable'); sends.push(input); } }, '@/lib/paymentConfig': config });
@@ -127,7 +127,7 @@ test('non-admin cannot reconcile a payment', async () => {
   assert.equal((await route.POST(new Request('https://example.invalid', { method: 'POST', body: '{}' }))).status, 403);
 });
 function registrationRoute(f, stripe) {
-  return load('app/api/tournaments/[id]/register/route.ts', { '@/lib/supabase/service': { createSupabaseServiceClient: () => f.db }, '@/lib/stripe': { getStripe: () => stripe }, '@/lib/paymentConfig': config, '@/lib/tournamentPayment': f.payment });
+  return load('app/api/tournaments/[id]/register/route.ts', { '@/lib/supabase/service': { createSupabaseServiceClient: () => f.db }, '@/lib/stripe': { getStripe: () => stripe }, '@/lib/paymentConfig': config, '@/lib/tournamentPayment': f.payment, '@/lib/registrationNotification': {notifyRegistrationReceived:async()=> 'sent'} });
 }
 function registrationRequest(f, change = {}) { return new Request('https://example.invalid', { method: 'POST', body: JSON.stringify({ first_name: 'Test', last_name: 'Player', email: 'test@example.invalid', phone: 'fixture', consent: 'on', ...change }) }); }
 test('valid registration links checkout and embeds session ID in return URL', async () => {
@@ -144,10 +144,10 @@ test('checkout-link database failure expires checkout and gives helpful failure 
   const res = await registrationRoute(f, stripe).POST(registrationRequest(f), { params: Promise.resolve({ id: f.tournament.id }) });
   const data = await res.json(); assert.equal(res.status, 503); assert.ok(data.registration_id); assert.ok(data.error.includes('Do not pay again')); assert.ok(expired);
 });
-test('free entry remains confirmed when email delivery fails', async () => {
-  const f = fixture(); f.db.tables.tournaments[0].entry_fee_cents = 0; f.setFailEmail(true);
-  const res = await registrationRoute(f, {}).POST(registrationRequest(f), { params: Promise.resolve({ id: f.tournament.id }) });
-  const data = await res.json(); assert.equal(res.status, 200); assert.equal(data.ok, true); assert.equal(data.email_status, 'failed'); assert.ok(data.message.includes('Your entry is saved'));
+test('a missing tournament fee rejects registration rather than confirming a free entry', async () => {
+ const f=fixture();f.db.tables.tournaments[0].entry_fee_cents=0;
+ const res=await registrationRoute(f,{}).POST(registrationRequest(f),{params:Promise.resolve({id:f.tournament.id})});
+ assert.equal(res.status,400);assert.equal(f.db.tables.tournament_registrations.length,1);
 });
 test('invalid registration fields and consent are rejected before insertion', async () => {
   const f = fixture(); const route = registrationRoute(f, {});
@@ -159,4 +159,15 @@ test('email uses the published event date, venue and address', async () => {
   const f = fixture(); f.tournament.date_display = '7 November 2026'; f.tournament.venue_name = 'Howick Library'; f.tournament.venue_address = '25 Uxbridge Road';
   await f.payment.sendTournamentConfirmation(f.db, f.entry, f.tournament);
   assert.ok(f.sends[0].text.includes('7 November 2026')); assert.ok(f.sends[0].text.includes('Howick Library')); assert.ok(f.sends[0].text.includes('25 Uxbridge Road'));
+});
+
+test('club events require this player active membership and charge the tournament fee separately',async()=>{
+ const f=fixture();f.db.tables.tournaments[0].tournament_type='club_calendar';const stripe={checkout:{sessions:{create:async()=>({id:'cs_live_clubfixture',url:'https://checkout.stripe.com/fixture'})}}};const route=registrationRoute(f,stripe);const params={params:Promise.resolve({id:f.tournament.id})};
+ assert.equal((await route.POST(registrationRequest(f),params)).status,400);
+ f.db.tables.club_memberships=[{id:randomUUID(),membership_id:'AKCC01001',first_name:'Test',last_name:'Player',email:'test@example.invalid',payment_status:'pending_payment',membership_status:'active',membership_end_date:'2099-12-31'}];
+ assert.equal((await route.POST(registrationRequest(f),params)).status,400);
+ f.db.tables.club_memberships[0].payment_status='paid';
+ assert.equal((await route.POST(registrationRequest(f,{first_name:'Someone else',membership_id:'AKCC01001'}),params)).status,400);
+ const res=await route.POST(registrationRequest(f,{membership_id:'AKCC01001'}),params);assert.equal(res.status,200);const body=await res.json();assert.equal(body.payment_status,'pending_payment');const saved=f.db.tables.tournament_registrations.at(-1);assert.equal(saved.entry_fee_cents,f.tournament.entry_fee_cents);assert.equal(saved.membership_id,'AKCC01001');assert.equal(saved.registration_status,'pending_payment');
+ f.db.tables.club_memberships[0].membership_end_date='2000-01-01';assert.equal((await route.POST(registrationRequest(f,{membership_id:'AKCC01001'}),params)).status,400);
 });

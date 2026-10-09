@@ -8,7 +8,7 @@ import { formatDate, formatMoney } from "@/lib/format";
 import { displayRatingFormat, displayRatingType, displayTournamentSystem, tournamentRounds } from "@/lib/tournamentOptions";
 
 function categories(t:any){ return Array.isArray(t.category_options) ? t.category_options : []; }
-function feeLabel(t:any){ if (t.tournament_type === "club_calendar") return "Covered by active membership"; const cats = categories(t); if (cats.length) { const fees = cats.map((c:any)=>Number(c.fee_cents||0)).filter(Boolean); if (fees.length) return `From ${formatMoney(Math.min(...fees))}`; } return t.entry_fee_cents ? formatMoney(t.entry_fee_cents) : "Fee TBC"; }
+function feeLabel(t:any){ const cats = categories(t); if (cats.length) { const fees = cats.map((c:any)=>Number(c.fee_cents||0)).filter(Boolean); if (fees.length) return `From ${formatMoney(Math.min(...fees))}`; } return t.entry_fee_cents ? formatMoney(t.entry_fee_cents) : "Fee TBC"; }
 function yearOf(t:any){ return Number(t.tournament_year || (t.start_date ? new Date(t.start_date).getFullYear() : new Date().getFullYear())); }
 
 export default async function TournamentsPage() {

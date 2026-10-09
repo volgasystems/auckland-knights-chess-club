@@ -22,6 +22,7 @@ class FakeDB {
       eq(k, v) { filters.push(r => r[k] === v); return q; },
       ilike(k, v) { const literal = v.replace(/\\([\\%_])/g,'$1').toLowerCase(); filters.push(r => String(r[k] || '').toLowerCase() === literal); return q; },
       is(k, v) { filters.push(r => r[k] === v); return q; },
+      gte(k, v) { filters.push(r => r[k] >= v); return q; },
       neq(k, v) { filters.push(r => r[k] !== v); return q; },
       in(k, v) { filters.push(r => v.includes(r[k])); return q; },
       order() { return q; }, limit(n) { limit = n; return q; },

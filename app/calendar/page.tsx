@@ -17,7 +17,7 @@ function yearOf(t: any) {
   return Number(t.tournament_year || (t.start_date ? new Date(t.start_date).getFullYear() : new Date().getFullYear()));
 }
 function registrationText(t: any) {
-  if (t.tournament_type === "club_calendar") return "Membership event — enrol online with active Membership ID";
+  if (t.tournament_type === "club_calendar") return "Club event — active membership and tournament payment required";
   const fee = Number(t.entry_fee_cents || 0);
   return `General/Open tournament — separate payment${fee ? ` from ${formatMoney(fee)}` : ""}`;
 }
@@ -41,7 +41,7 @@ export default async function CalendarPage(){
   const pageTitle = "Calendar";
   const rawCalendarTitle = settings?.calendar_title?.trim();
   const configuredYearTitle = rawCalendarTitle && rawCalendarTitle.toLowerCase() !== "calendar" ? rawCalendarTitle : `${firstYear} Calendar`;
-  const description = settings?.calendar_description?.trim() || "Yearly calendar of club events and general/open tournaments. Club calendar events are covered by active membership. General/open tournaments require separate payment.";
+  const description = settings?.calendar_description?.trim() || "Yearly calendar of club events and general/open tournaments. Club events require active membership. General/open events welcome everyone. Tournament registration requires separate payment for every player, including club members.";
 
   return <PageShell><main className="container-page py-12">
     <div className="mx-auto max-w-5xl rounded-2xl bg-white p-8 shadow-soft">
