@@ -204,7 +204,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
           ["last_name", "Last name *", member?.last_name || ""],
           ["email", "Email *", member?.email || ""],
           ["phone", "Phone *", member?.phone || ""],
-          ["date_of_birth", "Date of birth", member?.date_of_birth ? String(member.date_of_birth).slice(0, 10) : ""],
+          ["date_of_birth", "Date of birth *", member?.date_of_birth ? String(member.date_of_birth).slice(0, 10) : ""],
           ["nzcf_id", "NZCF ID", member?.nzcf_id || ""],
           ["nzcf_rating", "NZCF rating", member?.nzcf_rating || ""],
           ["fide_id", "FIDE ID", member?.fide_id || ""],

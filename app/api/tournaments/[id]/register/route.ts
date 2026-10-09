@@ -1,3 +1,4 @@
+import { validDateOfBirth } from "@/lib/registrationValidation";
 import { notifyRegistrationReceived } from "@/lib/registrationNotification";
 import { NextResponse } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -24,6 +25,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const { id } = await params;
     const body = await req.json();
+    if (!validDateOfBirth(body.date_of_birth)) return NextResponse.json({ error: "Enter a valid date of birth. Date of birth is required and cannot be in the future." }, { status: 400 });
     for (const field of ["first_name", "last_name", "email", "phone"]) {
       if (typeof body[field] !== "string" || !body[field].trim() || body[field].length > 254) return NextResponse.json({ error: "Enter your first name, last name, email and phone before registering." }, { status: 400 });
       body[field] = body[field].trim();
@@ -76,7 +78,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       last_name: body.last_name,
       email: body.email,
       phone: body.phone,
-      date_of_birth: body.date_of_birth || null,
+      date_of_birth: body.date_of_birth,
       nzcf_id: body.nzcf_id,
       nzcf_rating: body.nzcf_rating ? Number(body.nzcf_rating) : null,
       fide_id: body.fide_id,
