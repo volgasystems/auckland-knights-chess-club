@@ -69,6 +69,11 @@ export async function POST(req: Request){
   if(table==='gallery_photos' && clean.is_published && !clean.event_date) clean.event_date=new Date().toISOString().slice(0,10);
   if(table==='social_posts' && clean.title && !clean.status) clean.status='draft';
   if(table==='live_board_links' && clean.title && !clean.status) clean.status='current';
+  if(table==='membership_options' && ['create','update'].includes(action)) {
+    if (!Number.isInteger(clean.fee_cents) || clean.fee_cents < 0 || clean.fee_cents > 10000000) return NextResponse.json({error:'Enter a valid membership fee between $0 and $100,000.'},{status:400});
+    if (clean.validity_months != null && (!Number.isInteger(clean.validity_months) || clean.validity_months < 1 || clean.validity_months > 120)) return NextResponse.json({error:'Validity must be 1–120 months.'},{status:400});
+    if (clean.valid_until_month != null && (!Number.isInteger(clean.valid_until_month) || clean.valid_until_month < 1 || clean.valid_until_month > 12)) return NextResponse.json({error:'Calendar end month must be 1–12, or blank for rolling validity.'},{status:400});
+  }
   if(table==='membership_options' && clean.name && !clean.key) clean.key=slugify(clean.name).replace(/-/g,'_');
   if(table==='email_templates' && clean.name && !clean.template_key) clean.template_key=slugify(clean.name).replace(/-/g,'_');
 

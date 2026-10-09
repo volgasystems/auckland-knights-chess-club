@@ -1,3 +1,4 @@
+import { confirmMembershipRenewal } from "@/lib/membershipRenewal";
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -24,6 +25,10 @@ export async function POST(req: Request) {
         const result = await confirmTournamentPayment(s, session);
         if (result.email_status !== "sent") throw new Error("Confirmation email pending; retry delivery");
       }
+      if (type === "membership_renewal") {
+        const result = await confirmMembershipRenewal(s, session);
+        if (result.email_status !== "sent") throw new Error("Renewal email pending; retry delivery");
+      }
       if (type === "membership") {
         const result = await confirmMembershipPayment(s, session);
         if (result.email_status !== "sent") throw new Error("Membership email pending; retry delivery");
@@ -39,6 +44,10 @@ export async function POST(req: Request) {
           if (error) throw error;
           if (await tryTournamentConfirmation(s, entry, tournament, "failed") !== "sent") throw new Error("Failure email pending; retry delivery");
         }
+      }
+      if (type === "membership_renewal") {
+        const { error } = await s.from("membership_renewals").update({ status: expired ? "expired" : "failed" }).eq("id", session.metadata.renewal_id).eq("stripe_checkout_session_id", session.id).eq("status", "pending_payment");
+        if (error) throw error;
       }
       if (type === "membership" && expired) {
         const { error } = await s.from("club_memberships").update({ payment_status: "expired", membership_status: "expired" }).eq("id", session.metadata.membership_id).eq("payment_status", "pending_payment");

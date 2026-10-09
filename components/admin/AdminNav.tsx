@@ -9,7 +9,7 @@ const items = [
   ["documentation", "/club-admin/documentation", "Documentation"],
   ["users", "/club-admin/users", "Users"],
   ["members", "/club-admin/members", "Members"],
-  ["membership_options", "/club-admin/membership-options", "Membership Options"],
+  ["membership_options", "/club-admin/membership-options", "Membership Fees & Options"],
   ["tournaments", "/club-admin/tournaments", "Tournaments"],
   ["calendar", "/club-admin/calendar", "Calendar"],
   ["tournament_registrations", "/club-admin/tournament-registrations", "Tournament Registrations"],
