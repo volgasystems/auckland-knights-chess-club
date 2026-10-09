@@ -1,6 +1,7 @@
 // Tournament data is managed in admin and must be read on every request.
 export const dynamic = "force-dynamic";
 
+import MembershipRenewal from "@/components/MembershipRenewal";
 import GalleryAlbums from "@/components/GalleryAlbums";
 import { galleryAlbums } from "@/lib/gallery";
 import PageShell from "@/components/PageShell";
@@ -27,6 +28,7 @@ export default async function HomePage() {
     <Hero />
     <FeatureStrip />
     <main className="container-page py-10">
+      <MembershipRenewal member={null} options={[]} />
       <div className="grid gap-8 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between gap-4">
