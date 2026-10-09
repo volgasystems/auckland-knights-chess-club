@@ -1,3 +1,4 @@
+import { emailTextHtml } from "@/lib/emailTemplate";
 import { createHash } from "node:crypto";
 import { sendEmail } from "@/lib/email";
 import { paymentConfiguration } from "@/lib/paymentConfig";
@@ -36,7 +37,7 @@ export async function sendTournamentConfirmation(s: any, registration: any, tour
     const venue = tournament.venue_name || tournament.venue || "";
     const confirmationText = `Hello ${registration.first_name},\n\nYour entry for ${tournament.title} is confirmed.\n\nPlayer: ${registration.first_name} ${registration.last_name}\nCategory: ${registration.category_name || "General Entry"}\nEntry fee: NZ$${(Number(registration.entry_fee_cents || 0) / 100).toFixed(2)}\nReference: ${registration.id}\n${eventDate ? `Date: ${eventDate}\n` : ""}${venue ? `Venue: ${venue}\n` : ""}${tournament.venue_address ? `Address: ${tournament.venue_address}\n` : ""}\nView tournaments: ${paymentConfiguration().siteUrl || "https://www.aucklandknights.co.nz"}/tournaments\n\nFor help, contact info@aucklandknights.co.nz.\n\nAuckland Knights Chess Club`;
     const text = outcome === "confirmed" ? confirmationText : `Hello ${registration.first_name},\n\nStripe reported that payment for ${tournament.title} was unsuccessful. Your entry is not confirmed.\n\nReference: ${registration.id}\n\nIf your bank shows a payment, do not pay again. Contact info@aucklandknights.co.nz with this reference so we can check it.\n\nAuckland Knights Chess Club`;
-    await sendEmail({ to: registration.email, subject: `${outcome === "confirmed" ? "Entry confirmed" : "Payment unsuccessful"} — ${tournament.title}`, text, html: `<div style="font-family:Arial,sans-serif;white-space:pre-wrap">${escapeHtml(text)}</div>` });
+    await sendEmail({ to: registration.email, subject: `${outcome === "confirmed" ? "Entry confirmed" : "Payment unsuccessful"} — ${tournament.title}`, text, html: emailTextHtml(text) });
     check(await s.from("email_delivery_logs").update({ status: "sent", sent_at: new Date().toISOString(), error_message: null }).eq("id", logId));
     return "sent";
   } catch (error: any) {

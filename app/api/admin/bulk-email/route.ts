@@ -4,9 +4,8 @@ import { canAccess } from "@/lib/roles";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getEmailProviderStatus, sendEmail } from "@/lib/email";
 
-function render(template: string, values: Record<string, any>) {
-  return String(template || "").replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_, key) => String(values[key] ?? ""));
-}
+import { renderEmailTemplate as render, emailTextHtml, missingEmailValues } from "@/lib/emailTemplate";
+
 function fullName(m: any) { return `${m.first_name || ""} ${m.last_name || ""}`.trim(); }
 function valuesFor(m: any, customMessage = "") {
   return {
@@ -65,6 +64,9 @@ export async function POST(req: Request) {
   const recipients = filterMembers(members || [], String(body.target_group || "active"), Array.isArray(body.selected_ids) ? body.selected_ids : []);
   const first = recipients[0];
   const sampleValues = first ? valuesFor(first, body.custom_message) : { first_name: "Bharat", full_name: "Bharat Somaraju", membership_id: "AK01001", membership_end_date: "31 Dec", message: body.custom_message || "" };
+  const missing = missingEmailValues(`${template.subject}\n${template.body}`, sampleValues);
+  if (action === "send" && missing.length) return NextResponse.json({error:`This template requires ${missing.join(", ")}, which are unavailable in member bulk email. Use a member notice template; tournament confirmations are sent after registration payment.`}, {status:400});
+  if (action !== "send") for (const key of missing) (sampleValues as Record<string, any>)[key] = `[Sample ${key.replace(/_/g, " ")}]`;
   const subject = render(template.subject, sampleValues);
   const sample_body = render(template.body, sampleValues);
 
@@ -80,7 +82,7 @@ export async function POST(req: Request) {
     const to = String(body.test_email || "").trim();
     if (!to.includes("@")) return NextResponse.json({ error: "Please enter a valid test email address." }, { status: 400 });
     try {
-      await sendEmail({ to, subject, html: `<pre style="font-family:Arial,sans-serif;white-space:pre-wrap">${sample_body}</pre>` });
+      await sendEmail({ to, subject, text: sample_body, html: emailTextHtml(sample_body) });
       return NextResponse.json({ ok: true, recipient_count: 1, sent_count: 1, subject, sample_body, provider_status: emailStatus, message: `Test email sent to ${to}.` });
     } catch (e:any) {
       return NextResponse.json({ error: e?.message || "Test email failed", provider_status: emailStatus }, { status: 400 });
@@ -113,7 +115,7 @@ export async function POST(req: Request) {
   for (const m of recipients) {
     const values = valuesFor(m, body.custom_message);
     try {
-      await sendEmail({ to: m.email, subject: render(template.subject, values), html: `<pre style="font-family:Arial,sans-serif;white-space:pre-wrap">${render(template.body, values)}</pre>` });
+      await sendEmail({ to: m.email, subject: render(template.subject, values), text: render(template.body, values), html: emailTextHtml(render(template.body, values)) });
       sent += 1;
       await s.from("email_delivery_logs").insert({ notice_id: notice.id, recipient_email: m.email, recipient_name: fullName(m), status: "sent", sent_at: new Date().toISOString() });
     } catch (e: any) {

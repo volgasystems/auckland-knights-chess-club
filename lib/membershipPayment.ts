@@ -1,3 +1,4 @@
+import { renderEmailTemplate, emailTextHtml } from "@/lib/emailTemplate";
 import { sendEmail } from "@/lib/email";
 import { paymentConfiguration } from "@/lib/paymentConfig";
 function checked(result: any) { if (result.error) throw result.error; return result.data; }
@@ -35,10 +36,10 @@ export async function sendMembershipConfirmation(s: any, member: any, deliveryId
     const { data: template, error } = await s.from("email_templates").select("subject,body").eq("template_key", "membership_confirmation").eq("is_active", true).maybeSingle();
     if (error) throw error;
     const values: any = { ...member, full_name: `${member.first_name} ${member.last_name}`, club_name: "Auckland Knights Chess Club" };
-    const render = (v: string) => v.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_, key) => String(values[key] ?? ""));
+    const render = (v: string) => renderEmailTemplate(v, values);
     const subject = template?.subject ? render(template.subject) : "Auckland Knights membership confirmed";
     const text = template?.body ? render(template.body) : `Hello ${member.first_name},\n\nYour Auckland Knights Chess Club membership status is ${member.membership_status}.\nMembership ID: ${member.membership_id}\nValid from: ${member.membership_start_date}\nValid until: ${member.membership_end_date}\n\nUse your membership ID or registered email for club events.\nFor help, contact info@aucklandknights.co.nz.\n\nAuckland Knights Chess Club`;
-    await sendEmail({ to: member.email, subject, text, html: `<div style="font-family:Arial,sans-serif;white-space:pre-wrap">${escapeHtml(text)}</div>` });
+    await sendEmail({ to: member.email, subject, text, html: emailTextHtml(text) });
     checked(await s.from("email_delivery_logs").update({ status: "sent", sent_at: new Date().toISOString(), error_message: null }).eq("id", deliveryId));
     return "sent";
   } catch {
