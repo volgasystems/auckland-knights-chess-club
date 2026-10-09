@@ -1,3 +1,6 @@
+// Tournament data is managed in admin and must be read on every request.
+export const dynamic = "force-dynamic";
+
 import PageShell from "@/components/PageShell";
 import Link from "next/link";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
