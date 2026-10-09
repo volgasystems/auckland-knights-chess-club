@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 
 type AddressResult = {
+  dpid?: string;
+  provider?: string;
   display: string;
   street_address: string;
   suburb: string;
@@ -24,13 +26,17 @@ export default function AddressAutocomplete({
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AddressResult[]>([]);
   const [message, setMessage] = useState("");
+  const selectedRef = useRef("");
+  const [provider, setProvider] = useState("");
   const abortRef = useRef<AbortController | null>(null);
 
   async function searchAddress(value = query) {
     const search = value.trim();
+    abortRef.current?.abort();
     if (search.length < 3) {
       setResults([]);
       setMessage("");
+      setLoading(false);
       return;
     }
     abortRef.current?.abort();
@@ -41,6 +47,9 @@ export default function AddressAutocomplete({
     try {
       const res = await fetch(`/api/address?q=${encodeURIComponent(search)}`, { signal: controller.signal });
       const json = await res.json();
+      if (!res.ok || json.error) throw new Error("Address lookup failed");
+      if (controller.signal.aborted) return;
+      setProvider(json.provider || "");
       const list = Array.isArray(json.results) ? json.results : [];
       setResults(list);
       if (list.length === 0) setMessage("No matching NZ address found. Please type the address manually.");
@@ -55,16 +64,34 @@ export default function AddressAutocomplete({
   }
 
   useEffect(() => {
+    if (query === selectedRef.current) return;
     const timer = window.setTimeout(() => searchAddress(query), 450);
-    return () => window.clearTimeout(timer);
+    return () => { window.clearTimeout(timer); abortRef.current?.abort(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  function choose(r: AddressResult) {
-    onSelect({ street_address: r.street_address || "", suburb: r.suburb || "", city: r.city || "", postcode: r.postcode || "", display: r.display });
-    setQuery(r.display);
-    setResults([]);
+  async function choose(r: AddressResult) {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setLoading(true);
     setMessage("");
+    try {
+      let address = r;
+      if (r.provider === "nzpost" && r.dpid) {
+        const res = await fetch(`/api/address?dpid=${encodeURIComponent(r.dpid)}`, { signal: controller.signal });
+        const json = await res.json();
+        if (!res.ok || !json.address) throw new Error("Address details unavailable");
+        address = json.address;
+      }
+      if (controller.signal.aborted) return;
+      selectedRef.current = address.display;
+      onSelect(address);
+      setQuery(address.display);
+      setResults([]);
+    } catch (error: any) {
+      if (error?.name !== "AbortError") setMessage("Address lookup is unavailable. Please type the address manually.");
+    } finally { if (!controller.signal.aborted) setLoading(false); }
   }
 
   return (
@@ -74,7 +101,8 @@ export default function AddressAutocomplete({
         <div className="mt-1 flex flex-col gap-2 sm:flex-row">
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { abortRef.current?.abort(); selectedRef.current = ""; setResults([]); setLoading(false); setQuery(e.target.value); }}
+            maxLength={200}
             placeholder="Start typing a NZ address, for example: 16 Cassie Close"
             className="input"
           />
@@ -100,7 +128,8 @@ export default function AddressAutocomplete({
       )}
       {message && <p className="mt-2 text-xs font-semibold text-amber-700">{message}</p>}
       <p className="mt-2 text-xs text-stone-500">
-        NZ address autocomplete can use Addy when configured, with OpenStreetMap/Nominatim as fallback. Please confirm the selected address before submitting.
+        Please confirm the selected address before submitting.
+        {provider === "nzpost" && <span className="block">Brought to you by New Zealand Post</span>}
       </p>
     </div>
   );
