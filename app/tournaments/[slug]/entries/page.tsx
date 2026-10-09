@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import PageShell from "@/components/PageShell";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";

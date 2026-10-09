@@ -137,6 +137,9 @@ async function sendWithSmtp(config: EmailConfig, { to, subject, html, text, repl
     throw new Error("SMTP/Brevo is not configured. Add SMTP Host, Port, Username, Password and From Email in Club Settings.");
   }
   const transporter = nodemailer.createTransport({
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
     host: config.smtpHost,
     port: config.smtpPort,
     secure: config.smtpSecure,
@@ -171,7 +174,10 @@ export async function verifyEmailProvider() {
   if (config.provider === "smtp") {
     try {
       const transporter = nodemailer.createTransport({
-        host: config.smtpHost,
+        connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+    host: config.smtpHost,
         port: config.smtpPort,
         secure: config.smtpSecure,
         auth: { user: config.smtpUser, pass: config.smtpPass },
