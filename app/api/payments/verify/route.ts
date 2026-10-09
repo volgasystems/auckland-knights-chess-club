@@ -1,3 +1,4 @@
+import { confirmMembershipRenewal } from "@/lib/membershipRenewal";
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -14,6 +15,7 @@ export async function POST(req: Request) {
     if (session.payment_status !== "paid" || session.status !== "complete") return NextResponse.json({ status: session.status === "expired" ? "expired" : "pending", message: "Payment is not confirmed yet. If your bank shows a payment, do not pay again. Check again or contact info@aucklandknights.co.nz." });
     const s = createSupabaseServiceClient();
     if (session.metadata?.type === "tournament_registration") return NextResponse.json(await confirmTournamentPayment(s, session));
+    if (session.metadata?.type === "membership_renewal") return NextResponse.json(await confirmMembershipRenewal(s, session));
     if (session.metadata?.type === "membership") return NextResponse.json(await confirmMembershipPayment(s, session));
 
     return NextResponse.json({ error: "This payment cannot be linked to an entry. Contact the club; do not pay again." }, { status: 400 });

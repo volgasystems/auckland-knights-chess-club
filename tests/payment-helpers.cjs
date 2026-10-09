@@ -3,7 +3,7 @@ function load(path, deps = {}) {
   const output = ts.transpileModule(fs.readFileSync(path, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
   const exports = {};
   const quietConsole = { ...console, error() {} };
-  vm.runInNewContext(output, { exports, require: n => n in deps ? deps[n] : n.startsWith("@/") ? load(n.slice(2)+".ts", deps) : require(n), process, console: quietConsole, Date, URL }, { filename: path });
+  vm.runInNewContext(output, { exports, require: n => n in deps ? deps[n] : n.startsWith("@/") ? load(n.slice(2)+".ts", deps) : require(n), process, console: quietConsole, Date, URL, Buffer }, { filename: path });
   return exports;
 }
 class FakeDB {
@@ -20,6 +20,7 @@ class FakeDB {
       upsert(v, o) { op = 'upsert'; value = v; opts = o; return q; },
       update(v) { op = 'update'; value = v; return q; },
       eq(k, v) { filters.push(r => r[k] === v); return q; },
+      ilike(k, v) { const literal = v.replace(/\\([\\%_])/g,'$1').toLowerCase(); filters.push(r => String(r[k] || '').toLowerCase() === literal); return q; },
       is(k, v) { filters.push(r => r[k] === v); return q; },
       neq(k, v) { filters.push(r => r[k] !== v); return q; },
       in(k, v) { filters.push(r => v.includes(r[k])); return q; },

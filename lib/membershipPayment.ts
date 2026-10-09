@@ -20,15 +20,15 @@ export async function assignMembershipId(s: any, member: any) {
   }
   throw new Error("Unable to allocate a unique membership ID");
 }
-export async function sendMembershipConfirmation(s: any, member: any) {
+export async function sendMembershipConfirmation(s: any, member: any, deliveryId = member.id) {
   const now = new Date().toISOString();
-  const claim = await s.from("email_delivery_logs").insert({ id: member.id, recipient_email: member.email, recipient_name: `${member.first_name} ${member.last_name}`, status: "queued", created_at: now });
+  const claim = await s.from("email_delivery_logs").insert({ id: deliveryId, recipient_email: member.email, recipient_name: `${member.first_name} ${member.last_name}`, status: "queued", created_at: now });
   if (claim.error) {
     if (claim.error.code !== "23505") throw claim.error;
-    const existing = checked(await s.from("email_delivery_logs").select("*").eq("id", member.id).single());
+    const existing = checked(await s.from("email_delivery_logs").select("*").eq("id", deliveryId).single());
     if (existing.status === "sent") return "sent";
     if (existing.status === "queued" && Date.now() - new Date(existing.created_at).getTime() < 120000) return "pending";
-    const locked = checked(await s.from("email_delivery_logs").update({ status: "queued", created_at: now, error_message: null }).eq("id", member.id).eq("status", existing.status).eq("created_at", existing.created_at).select("id").maybeSingle());
+    const locked = checked(await s.from("email_delivery_logs").update({ status: "queued", created_at: now, error_message: null }).eq("id", deliveryId).eq("status", existing.status).eq("created_at", existing.created_at).select("id").maybeSingle());
     if (!locked) return "pending";
   }
   try {
@@ -39,10 +39,10 @@ export async function sendMembershipConfirmation(s: any, member: any) {
     const subject = template?.subject ? render(template.subject) : "Auckland Knights membership confirmed";
     const text = template?.body ? render(template.body) : `Hello ${member.first_name},\n\nYour Auckland Knights Chess Club membership status is ${member.membership_status}.\nMembership ID: ${member.membership_id}\nValid from: ${member.membership_start_date}\nValid until: ${member.membership_end_date}\n\nUse your membership ID or registered email for club events.\nFor help, contact info@aucklandknights.co.nz.\n\nAuckland Knights Chess Club`;
     await sendEmail({ to: member.email, subject, text, html: `<div style="font-family:Arial,sans-serif;white-space:pre-wrap">${escapeHtml(text)}</div>` });
-    checked(await s.from("email_delivery_logs").update({ status: "sent", sent_at: new Date().toISOString(), error_message: null }).eq("id", member.id));
+    checked(await s.from("email_delivery_logs").update({ status: "sent", sent_at: new Date().toISOString(), error_message: null }).eq("id", deliveryId));
     return "sent";
   } catch {
-    checked(await s.from("email_delivery_logs").update({ status: "failed", error_message: "Membership email failed. Check Email Diagnostics and retry." }).eq("id", member.id));
+    checked(await s.from("email_delivery_logs").update({ status: "failed", error_message: "Membership email failed. Check Email Diagnostics and retry." }).eq("id", deliveryId));
     return "failed";
   }
 }
