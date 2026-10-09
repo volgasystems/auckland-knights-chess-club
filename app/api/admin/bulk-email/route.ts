@@ -1,3 +1,4 @@
+import { tournamentEmailRecipients } from "@/lib/tournamentEmailRecipients";
 import { NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/auth";
 import { canAccess } from "@/lib/roles";
@@ -61,11 +62,23 @@ export async function POST(req: Request) {
   if (templateError || !template) return NextResponse.json({ error: "Template not found" }, { status: 404 });
   const { data: members, error } = await s.from("club_memberships").select("*").order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  const recipients = filterMembers(members || [], String(body.target_group || "active"), Array.isArray(body.selected_ids) ? body.selected_ids : []);
+  let recipients = filterMembers(members || [], String(body.target_group || "active"), Array.isArray(body.selected_ids) ? body.selected_ids : []);
+  const needsTournament = /{{\s*tournament_(name|title)\s*}}/.test(`${template.subject} ${template.body}`) || ["calendar_registration","general_tournament_paid"].includes(template.template_key);
+  let tournament: any = null;
+  if (needsTournament && body.tournament_id) {
+    const {data:event,error:eventError} = await s.from("tournaments").select("id,title").eq("id", body.tournament_id).maybeSingle();
+    if (eventError || !event) return NextResponse.json({error:"Selected tournament could not be loaded."}, {status:400});
+    tournament = event;
+    const {data:registrations,error:registrationError} = await s.from("tournament_registrations").select("id,first_name,last_name,email,payment_status,registration_status,category_name,entry_fee_cents").eq("tournament_id", event.id).eq("payment_status","paid").eq("registration_status","confirmed");
+    if (registrationError) return NextResponse.json({error:"Tournament registrations could not be loaded."}, {status:400});
+    recipients = tournamentEmailRecipients(recipients, registrations || []);
+  }
+  if (needsTournament && !tournament && action === "send") return NextResponse.json({error:"Select a tournament and preview the email before sending."}, {status:400});
+  const eventValues = tournament ? {tournament_name:tournament.title,tournament_title:tournament.title} : {};
   const first = recipients[0];
-  const sampleValues = first ? valuesFor(first, body.custom_message) : { first_name: "Bharat", full_name: "Bharat Somaraju", membership_id: "AK01001", membership_end_date: "31 Dec", message: body.custom_message || "" };
+  const sampleValues: Record<string, any> = {...eventValues, ...(first ? valuesFor(first, body.custom_message) : { first_name: "Bharat", full_name: "Bharat Somaraju", membership_id: "AK01001", membership_end_date: "31 Dec", message: body.custom_message || "" })};
   const missing = missingEmailValues(`${template.subject}\n${template.body}`, sampleValues);
-  if (action === "send" && missing.length) return NextResponse.json({error:`This template requires ${missing.join(", ")}, which are unavailable in member bulk email. Use a member notice template; tournament confirmations are sent after registration payment.`}, {status:400});
+  if (action === "send" && missing.length) return NextResponse.json({error:`This template requires ${missing.join(", ")}, which are unavailable for the selected recipients. Select the matching event or use a member notice template.`}, {status:400});
   if (action !== "send") for (const key of missing) (sampleValues as Record<string, any>)[key] = `[Sample ${key.replace(/_/g, " ")}]`;
   const subject = render(template.subject, sampleValues);
   const sample_body = render(template.body, sampleValues);
@@ -113,7 +126,7 @@ export async function POST(req: Request) {
 
   let sent = 0;
   for (const m of recipients) {
-    const values = valuesFor(m, body.custom_message);
+    const values = {...valuesFor(m, body.custom_message), ...eventValues};
     try {
       await sendEmail({ to: m.email, subject: render(template.subject, values), text: render(template.body, values), html: emailTextHtml(render(template.body, values)) });
       sent += 1;
