@@ -1,11 +1,13 @@
 import { requireAdmin } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { paymentAccountFields } from "@/lib/paymentAccounts";
 import CrudManager from "@/components/admin/CrudManager";
 import { RATING_FORMAT_OPTIONS, RATING_TYPE_OPTIONS, ROUND_OPTIONS, TIME_CONTROL_OPTIONS, TOURNAMENT_SYSTEM_OPTIONS } from "@/lib/tournamentOptions";
 
 export default async function CalendarAdmin(){
   await requireAdmin("calendar");
   const s=createSupabaseServiceClient();
+  const accountFields = await paymentAccountFields(s);
   const [{data:settings},{data}]=await Promise.all([
     s.from("club_settings").select("*").eq("id","default"),
     s.from("tournaments").select("*").order("start_date",{ascending:true})
@@ -26,8 +28,8 @@ export default async function CalendarAdmin(){
       {name:'status',label:'Status',options:['draft','open','closed','completed','archived']},
       {name:'tournament_year',label:'Year',type:'number',help:'Example: 2026. This can be derived from the start date, but you can override it.'},
       {name:'date_display',label:'Date display text',help:'Examples: Mar 23 – May 18; May 25 and June 8; Jan 24 – Jan 26; Every Monday from Feb 2 to Mar 16'},
-      {name:'start_date',label:'Start Date',type:'date'},
-      {name:'end_date',label:'End Date',type:'date'},
+      {name:'start_date',label:'Start date/time (your local timezone)',type:'datetime-local'},
+      {name:'end_date',label:'End date/time (your local timezone)',type:'datetime-local'},
       {name:'rating_format',label:'Rating format',options:RATING_FORMAT_OPTIONS},
       {name:'time_control',label:'Time control',options:TIME_CONTROL_OPTIONS},
       {name:'custom_time_control',label:'Custom time control',help:'Use only when Time control = Custom.'},
@@ -35,7 +37,8 @@ export default async function CalendarAdmin(){
       {name:'rounds',label:'Custom rounds number',type:'number'},
       {name:'tournament_system',label:'Tournament system',options:TOURNAMENT_SYSTEM_OPTIONS},
       {name:'rating_type',label:'Rating type',options:RATING_TYPE_OPTIONS},
-      {name:'venue_name',label:'Venue name'},
+      ...accountFields,
+    {name:'venue_name',label:'Venue name'},
       {name:'venue_address',label:'Venue address',type:'address',help:'Use Search NZ address below to autocomplete the venue address.'},
       {name:'description',label:'Small description',textarea:true},
       {name:'allow_public_registration',label:'Allow registration / registration link',type:'checkbox'},
@@ -44,7 +47,7 @@ export default async function CalendarAdmin(){
       {name:'category_options',label:'Tournament categories and fees',type:'categories'},
       {name:'tournament_prizes',label:'Prize fund',type:'prizes'},
       {name:'lichess_url',label:'Lichess broadcast link'},
-      {name:'vega_url',label:'Vega page link'},
+      {name:'vega_url',label:'Results URL (Vega or other)'},
       {name:'pgn_url',label:'PGN link'}
     ]} />
   </div>;
