@@ -17,7 +17,7 @@ export default async function SocialPostsAdmin(){
     <CrudManager table="social_posts" title="Create / Edit Social Media Post" rows={rows} fields={[
       {name:'title',label:'Post title',required:true},
       {name:'post_type',label:'Post type',options:['news','result','custom','tournament']},
-      {name:'message',label:'Post message / caption',textarea:true,required:true},
+      {name:'message',label:'Post message / caption',type: "caption",required:true},
       {name:'image_url',label:'Image',type:'image',imageBucket:'news-images'},
       {name:'website_url',label:'Website link'},
       {name:'platforms',label:'Selected social media platforms',type:'multi_options',options:['Facebook','Instagram','YouTube','X','LinkedIn']},

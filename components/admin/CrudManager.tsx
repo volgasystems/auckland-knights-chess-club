@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import RichTextEditor from "@/components/admin/RichTextEditor";
+import ContentPreview from "@/components/admin/ContentPreview";
+import { CONTENT_PREVIEW_TABLES } from "@/lib/contentEditing";
 import ImageCropUpload from "@/components/ImageCropUpload";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 
@@ -100,6 +103,10 @@ export default function CrudManager({ table, title, fields, rows, meetingLabels,
   const empty = { ...Object.fromEntries(fields.map((f) => [f.name, initialValue(f)])), ...initialValues };
   const [form, setForm] = useState<any>(empty);
   const [editing, setEditing] = useState<any>(null);
+  const [previewData,setPreviewData]=useState<any>(null);
+  const [previewSave,setPreviewSave]=useState(false);
+  const needsPreview=CONTENT_PREVIEW_TABLES.includes(table);
+  const publishLabel=form.is_published || form.publish_as_news ? "Save & Publish" : "Save changes";
   const [loading, setLoading] = useState(false);
 
   function edit(row: any) {
@@ -116,8 +123,10 @@ export default function CrudManager({ table, title, fields, rows, meetingLabels,
     setEditing(row.id); setForm(next); window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function save(e: React.FormEvent) {
-    e.preventDefault(); setLoading(true);
+  async function save(e?: React.FormEvent, reviewed=false) {
+    e?.preventDefault();
+    if(needsPreview && !reviewed) {setPreviewData({...form});setPreviewSave(true);return;}
+    setLoading(true);
     const payload: any = { ...form };
     for (const f of fields) {
       if (f.type === "datetime-local" && payload[f.name]) payload[f.name] = new Date(payload[f.name]).toISOString();
@@ -138,6 +147,7 @@ export default function CrudManager({ table, title, fields, rows, meetingLabels,
   }
 
   function renderField(f: Field) {
+    if (["richtext","caption"].includes(f.type || "")) return <RichTextEditor label={f.label} required={f.required} value={form[f.name] || ""} plain={f.type === "caption"} onChange={value=>setForm({...form,[f.name]:value})}/>;
     if (f.type === "image") return <ImageCropUpload label={f.label} bucket={f.imageBucket || "news-images"} value={form[f.name]} onChange={(url) => setForm({ ...form, [f.name]: url })} />;
     if (f.type === "categories") return <CategoryEditor value={form[f.name] || []} onChange={(rows) => setForm({ ...form, [f.name]: rows })} />;
     if (f.type === "prizes") return <PrizeEditor value={form[f.name] || []} onChange={(rows) => setForm({ ...form, [f.name]: rows })} />;
@@ -151,5 +161,5 @@ export default function CrudManager({ table, title, fields, rows, meetingLabels,
     return <label><span className="admin-label">{f.label}</span>{f.help && <p className="mt-1 text-xs text-slate-500">{f.help}</p>}<input value={form[f.name] || ""} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} required={f.required} type={f.type || "text"} className="admin-input mt-1" /></label>;
   }
 
-  return <div><h1 className="mb-6 text-3xl font-extrabold">{title}</h1><form onSubmit={save} className="card mb-8 p-6">{editing && <div className="mb-5 rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-800">Editing existing item. Click Update to save changes.</div>}<div className="grid gap-4 md:grid-cols-2">{fields.map((f) => <div key={f.name} className={f.textarea || ["image", "json", "categories", "prizes", "multi_options", "address"].includes(f.type || "") ? "md:col-span-2" : ""}>{renderField(f)}</div>)}</div><div className="mt-6 flex gap-2"><button disabled={loading} className="btn-primary">{loading ? "Saving..." : editing ? "Update" : "Add"}</button>{editing && <button type="button" onClick={() => { setEditing(null); setForm(empty); }} className="btn-secondary">Cancel</button>}</div></form><div className="card overflow-x-auto"><table className="w-full text-sm"><thead className="bg-slate-100 text-left"><tr>{table === "payment_accounts" ? <><th className="p-3">Code / usage</th><th className="p-3">Account number</th><th className="p-3">Purpose</th></> : <th className="p-3">Image</th>}<th className="p-3">Title/Name</th><th className="p-3">Status</th><th className="p-3">Updated</th><th className="p-3">Actions</th></tr></thead><tbody>{rows.map((r: any) => <tr key={r.id} className="border-t">{table === "payment_accounts" ? <><td className="p-3">{r.code}</td><td className="p-3 whitespace-nowrap">{r.account_number}</td><td className="p-3">{r.purpose}</td></> : <td className="p-3">{(r.image_url || r.winner_photo_url || r.photo_url || r.image) ? <img src={r.image_url || r.winner_photo_url || r.photo_url || r.image} alt="" className="h-12 w-16 rounded object-cover" /> : <span className="text-slate-400">—</span>}</td>}<td className="p-3 font-bold">{r.title || r.person_name || r.name || r.question || r.player_first_name || r.club_name || r.email || r.template_key || r.id}{meetingLabels && <div className="mt-1 text-xs font-normal text-slate-600">{meetingLabels[r.meeting_id]}{r.role_title ? ` · ${r.role_title}` : ""}</div>}</td><td className="p-3">{String(table === "payment_accounts" ? (r.is_active ? "Active" : "Inactive") : r.status || r.role || r.outcome || (meetingLabels ? "Saved" : "") || (r.is_published ? "Published" : "Draft") || r.payment_status || "")}</td><td className="p-3">{r.updated_at || r.created_at || ""}</td><td className="p-3"><button onClick={() => edit(r)} className="mr-2 font-bold text-black">Edit</button><button onClick={() => del(r.id)} className="font-bold text-red-700">Delete</button></td></tr>)}</tbody></table></div></div>;
+  return <div><h1 className="mb-6 text-3xl font-extrabold">{title}</h1><form onSubmit={e=>save(e)} className="card mb-8 p-6">{editing && <div className="mb-5 rounded-lg bg-amber-50 p-3 text-sm font-semibold text-amber-800">Editing existing item. Review and save your changes.</div>}<div className="grid gap-4 md:grid-cols-2">{fields.map((f) => <div key={f.name} className={f.textarea || ["richtext", "caption", "image", "json", "categories", "prizes", "multi_options", "address"].includes(f.type || "") ? "md:col-span-2" : ""}>{renderField(f)}</div>)}</div><div className="mt-6 flex flex-wrap gap-2">{needsPreview && <button type="button" className="btn-secondary" onClick={()=>{setPreviewData({...form});setPreviewSave(false);}}>Preview</button>}<button disabled={loading} className="btn-primary">{loading ? "Saving..." : needsPreview ? "Review & Save" : editing ? "Update" : "Add"}</button>{editing && <button type="button" onClick={() => { setEditing(null); setForm(empty); }} className="btn-secondary">Cancel</button>}</div></form><div className="card overflow-x-auto"><table className="w-full text-sm"><thead className="bg-slate-100 text-left"><tr>{table === "payment_accounts" ? <><th className="p-3">Code / usage</th><th className="p-3">Account number</th><th className="p-3">Purpose</th></> : <th className="p-3">Image</th>}<th className="p-3">Title/Name</th><th className="p-3">Status</th><th className="p-3">Updated</th><th className="p-3">Actions</th></tr></thead><tbody>{rows.map((r: any) => <tr key={r.id} className="border-t">{table === "payment_accounts" ? <><td className="p-3">{r.code}</td><td className="p-3 whitespace-nowrap">{r.account_number}</td><td className="p-3">{r.purpose}</td></> : <td className="p-3">{(r.image_url || r.winner_photo_url || r.photo_url || r.image) ? <img src={r.image_url || r.winner_photo_url || r.photo_url || r.image} alt="" className="h-12 w-16 rounded object-cover" /> : <span className="text-slate-400">—</span>}</td>}<td className="p-3 font-bold">{r.title || r.person_name || r.name || r.question || r.player_first_name || r.club_name || r.email || r.template_key || r.id}{meetingLabels && <div className="mt-1 text-xs font-normal text-slate-600">{meetingLabels[r.meeting_id]}{r.role_title ? ` · ${r.role_title}` : ""}</div>}</td><td className="p-3">{String(table === "payment_accounts" ? (r.is_active ? "Active" : "Inactive") : r.status || r.role || r.outcome || (meetingLabels ? "Saved" : "") || (r.is_published ? "Published" : "Draft") || r.payment_status || "")}</td><td className="p-3">{r.updated_at || r.created_at || ""}</td><td className="p-3">{needsPreview && <button type="button" className="mr-2 font-bold" onClick={()=>{setPreviewData(r);setPreviewSave(false);}}>Preview</button>}<button onClick={() => edit(r)} className="mr-2 font-bold text-black">Edit</button><button onClick={() => del(r.id)} className="font-bold text-red-700">Delete</button></td></tr>)}</tbody></table></div>{previewData && <ContentPreview data={previewData} fields={table === "elected_team_members" ? fields.filter(f=>!["email","phone","notes"].includes(f.name)) : fields} busy={loading} saveLabel={publishLabel} onClose={()=>setPreviewData(null)} onSave={previewSave ? ()=>save(undefined,true) : undefined}/>}</div>;
 }

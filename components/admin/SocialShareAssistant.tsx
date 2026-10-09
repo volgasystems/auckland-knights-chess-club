@@ -1,5 +1,6 @@
 "use client";
 
+import ContentPreview from "@/components/admin/ContentPreview";
 import { useState } from "react";
 
 type SocialPost = {
@@ -32,9 +33,13 @@ async function copyText(text: string, label: string) {
 }
 
 export default function SocialShareAssistant({ posts }: { posts: SocialPost[] }) {
+  const [review,setReview]=useState<SocialPost | null>(null);
+  const [reviewMark,setReviewMark]=useState(false);
+  const [busy,setBusy]=useState(false);
   const [expanded, setExpanded] = useState<string | null>(posts?.[0]?.id || null);
 
   async function markPosted(post: SocialPost) {
+    setBusy(true);
     const res = await fetch("/api/admin/crud", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -48,7 +53,7 @@ export default function SocialShareAssistant({ posts }: { posts: SocialPost[] })
         },
       }),
     });
-    const json = await res.json();
+    const json = await res.json(); setBusy(false);
     if (!res.ok) return alert(json.error || "Unable to mark as posted.");
     window.location.reload();
   }
@@ -59,6 +64,7 @@ export default function SocialShareAssistant({ posts }: { posts: SocialPost[] })
 
   return (
     <div className="space-y-4">
+      {review && <ContentPreview data={review} fields={[{name:"title",label:"Title"},{name:"image_url",label:"Image",type:"image"},{name:"message",label:"Caption",type:"caption"},{name:"website_url",label:"Website link"}]} onClose={()=>setReview(null)} busy={busy} saveLabel="Mark as posted" onSave={reviewMark ? ()=>markPosted(review) : undefined}/>}
       {posts.map((post) => {
         const platforms = Array.isArray(post.platforms) ? post.platforms : [];
         const open = expanded === post.id;
@@ -83,7 +89,8 @@ export default function SocialShareAssistant({ posts }: { posts: SocialPost[] })
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button type="button" onClick={() => copyText(post.message || "", "Caption")} className="btn-primary py-2">Copy Caption</button>
                     {post.website_url && <button type="button" onClick={() => copyText(post.website_url || "", "Website link")} className="btn-secondary py-2">Copy Link</button>}
-                    <button type="button" onClick={() => markPosted(post)} className="btn-gold py-2">Mark as Posted</button>
+                    <button type="button" onClick={()=>{setReview(post);setReviewMark(false);}} className="btn-secondary py-2">Preview Post</button>
+                    <button type="button" onClick={() => {setReview(post);setReviewMark(true);}} className="btn-gold py-2">Mark as Posted</button>
                   </div>
                   {post.website_url && <p className="mt-3 break-all text-sm text-slate-600"><b>Website link:</b> {post.website_url}</p>}
                 </div>
