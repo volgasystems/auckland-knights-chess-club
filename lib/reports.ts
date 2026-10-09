@@ -1,3 +1,5 @@
+export function memberStatusLabel(value: unknown) { return value === "pending_payment" ? "Pending" : String(value || "").replace(/_/g, " "); }
+
 export type ReportType = "members" | "tournament_registrations" | "absences" | "payments";
 
 export type ReportColumn = {
@@ -12,12 +14,10 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "payable", label: "Payable", value: (m) => `$${(Number(m.total_amount_cents || 0)/100).toFixed(2)}` },
     { key: "paid", label: "Paid", value: (m) => `$${(["paid", "manual_paid"].includes(m.payment_status) ? Number(m.total_amount_cents || 0)/100 : 0).toFixed(2)}` },
     { key: "balance", label: "Balance", value: (m) => `$${(["paid", "manual_paid", "waived"].includes(m.payment_status) ? 0 : Number(m.total_amount_cents || 0)/100).toFixed(2)}` },
-    { key: "notes", label: "Notes", value: (m) => m.notes || "" },
-    { key: "person_id", label: "Person ID", value: (m) => m.id },
     { key: "email", label: "Email", value: (m) => m.email },
     { key: "phone", label: "Phone", value: (m) => m.phone },
-    { key: "membership_id", label: "Membership ID", value: (m) => m.membership_id },
-    { key: "membership_status", label: "Status", value: (m) => m.membership_status },
+    { key: "membership_id", label: "Member ID", value: (m) => m.membership_id },
+    { key: "membership_status", label: "Status", value: (m) => memberStatusLabel(m.membership_status) },
     { key: "membership_end_date", label: "Expiry Date", value: (m) => m.membership_end_date },
     { key: "school", label: "School", value: (m) => m.school },
     { key: "parent_guardian", label: "Parent/Guardian", value: (m) => [m.parent_guardian_first_name, m.parent_guardian_last_name].filter(Boolean).join(" ") || m.parent_guardian_name },
@@ -25,14 +25,14 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "nzcf_rating", label: "NZCF Rating", value: (m) => m.nzcf_rating },
     { key: "fide_id", label: "FIDE ID", value: (m) => m.fide_id },
     { key: "fide_rating", label: "FIDE Rating", value: (m) => m.fide_rating },
-    { key: "payment_status", label: "Payment", value: (m) => m.payment_status },
+    { key: "payment_status", label: "Payment", value: (m) => memberStatusLabel(m.payment_status) },
     { key: "amount", label: "Amount", value: (m) => m.total_amount_cents != null ? `$${(Number(m.total_amount_cents)/100).toFixed(2)}` : "" },
     { key: "registered", label: "Date Registered", value: (m) => m.created_at ? new Date(m.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" }
   ],
   tournament_registrations: [
     { key: "tournament", label: "Tournament", value: (r) => r.tournament_title || r.tournaments?.title },
     { key: "category", label: "Category", value: (r) => r.category_name || (r.is_member_registration ? "Membership Event" : "General") },
-    { key: "membership_id", label: "Membership ID", value: (r) => r.membership_id },
+    { key: "membership_id", label: "Member ID", value: (r) => r.membership_id },
     { key: "player", label: "Player", value: (r) => `${r.first_name || ""} ${r.last_name || ""}`.trim() },
     { key: "email", label: "Email", value: (r) => r.email },
     { key: "phone", label: "Phone", value: (r) => r.phone },
@@ -68,7 +68,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
 };
 
 export const DEFAULT_COLUMNS: Record<ReportType, string[]> = {
-  members: ["name", "registered", "payable", "paid", "balance", "notes", "person_id", "membership_status", "email"],
+  members: ["name", "registered", "payable", "paid", "balance", "membership_id", "membership_status", "email"],
   tournament_registrations: ["tournament", "category", "membership_id", "player", "email", "phone", "nzcf_rating", "fide_rating", "payment_status", "registration_status", "fee"],
   absences: ["player", "tournament", "round", "round_date", "reason", "email", "phone", "status"],
   payments: ["type", "name", "email", "amount", "status", "date"]
