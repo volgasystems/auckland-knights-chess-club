@@ -1,3 +1,4 @@
+import { notifyRegistrationReceived } from "@/lib/registrationNotification";
 import { NextResponse } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getStripe } from "@/lib/stripe";
@@ -115,7 +116,9 @@ export async function POST(req: Request) {
     const { error: sessionError } = await s.from("club_memberships").update({ stripe_checkout_session_id: session.id, updated_at: new Date().toISOString() }).eq("id", record.id);
     if (sessionError || !session.url) { try { await stripe.checkout.sessions.expire(session.id); } catch {} throw new Error("Checkout link could not be saved"); }
 
+    const emailStatus = await notifyRegistrationReceived(s, record, "membership");
     return NextResponse.json({
+      email_status: emailStatus,
       url: session.url,
       membership_id: record.id,
       payment_status: "pending_payment",

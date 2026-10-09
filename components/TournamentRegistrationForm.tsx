@@ -52,10 +52,10 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
     () => cats.find((c: any) => (c.key || c.name) === selectedCategory),
     [cats, selectedCategory]
   );
-  const fee = isClubCalendar ? 0 : chosen ? Number(chosen.fee_cents || 0) : Number(tournament.entry_fee_cents || 0);
+  const fee = chosen ? Number(chosen.fee_cents || 0) : Number(tournament.entry_fee_cents || 0);
 
   useEffect(() => {
-    if (!isClubCalendar && fee > 0) {
+    if (fee > 0) {
       fetch("/api/payments/status").then((res) => res.json()).then((data) => { setPaymentMode(data.mode); setPaymentAvailable(data.available); }).catch(() => {});
     }
   }, [isClubCalendar, fee]);
@@ -129,7 +129,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
       <h2 className="text-2xl font-extrabold">{isClubCalendar ? "Enrol for" : "Register for"} {tournament.title}</h2>
       {isClubCalendar ? (
         <div className="mt-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-900">
-          <b>Club Calendar Event:</b> this event is covered by active Auckland Knights membership. Enter your Membership ID or registered email, click <b>Find Member</b>, then confirm enrolment. No separate payment is required.
+          <b>Club Calendar Event:</b> active Auckland Knights membership is mandatory. Enter your Membership ID or registered email, click <b>Find Member</b>, then register and pay the tournament entry fee. Membership does not cover tournament fees.
         </div>
       ) : (
         <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
@@ -137,16 +137,16 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
           If you close or cancel the payment page, your entry will remain as <b>Pending Payment</b> and will not appear in the public entries list.
         </div>
       )}
-      {!isClubCalendar && fee > 0 && !paymentAvailable && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-4 text-red-800">Online payment is temporarily unavailable. Contact info@aucklandknights.co.nz to arrange registration.</p>}
+      {fee > 0 && !paymentAvailable && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-4 text-red-800">Online payment is temporarily unavailable. Contact info@aucklandknights.co.nz to arrange registration.</p>}
       {paymentMode === "test" && <p className="mt-3 font-bold text-amber-800">Test checkout: this does not take a real payment or confirm a live paid entry.</p>}
-      <p className="mt-3 text-sm text-slate-600">Current fee: <b>{isClubCalendar ? "Covered by membership" : formatMoney(fee)}</b>.</p>
+      <p className="mt-3 text-sm text-slate-600">Current fee: <b>{fee > 0 ? formatMoney(fee) : "Not configured — contact the club"}</b>.</p>
 
       {isClubCalendar && (
         <div className="mt-5 rounded-xl bg-green-50 p-4">
           <label>
             <span className="label">Membership ID or registered email *</span>
             <div className="mt-1 flex flex-col gap-2 sm:flex-row">
-              <input value={memberIdentifier} onChange={(e) => setMemberIdentifier(e.target.value)} placeholder="AK01001 or member@email.com" className="input uppercase sm:flex-1" />
+              <input value={memberIdentifier} onChange={(e) => { setMemberIdentifier(e.target.value); setMember(null); }} placeholder="AK01001 or member@email.com" className="input uppercase sm:flex-1" />
               <button type="button" onClick={findMember} disabled={lookupLoading} className="btn-secondary whitespace-nowrap">
                 {lookupLoading ? "Finding..." : "Find Member"}
               </button>
@@ -164,7 +164,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
                 <p><b>NZCF:</b> {member.nzcf_id || ""} {member.nzcf_rating ? `(${member.nzcf_rating})` : ""}</p>
                 <p><b>FIDE:</b> {member.fide_id || ""} {member.fide_rating ? `(${member.fide_rating})` : ""}</p>
               </div>
-              <p className="mt-3 text-xs text-green-800">Please review the details below and click Confirm Enrolment.</p>
+              <p className="mt-3 text-xs text-green-800">Please review the details below and continue to tournament payment.</p>
             </div>
           )}
           <input type="hidden" name="membership_id" value={member?.membership_id || (!memberIdentifier.includes("@") ? memberIdentifier.toUpperCase() : "")} />
@@ -172,7 +172,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
         </div>
       )}
 
-      {!isClubCalendar && cats.length > 0 && (
+      {cats.length > 0 && (
         <div className="mt-5 rounded-xl bg-akcc-pale p-4">
           <label>
             <span className="label">Select Category *</span>
@@ -237,8 +237,8 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
           Open payment page
         </a>
       )}
-      <button disabled={loading || confirmed || (!isClubCalendar && fee > 0 && !paymentAvailable) || (isClubCalendar && !member)} className="btn-primary mt-6">
-        {confirmed ? "Registration Confirmed" : loading ? "Submitting..." : isClubCalendar ? "Confirm Enrolment" : fee > 0 ? "Continue to Payment" : "Confirm Registration"}
+      <button disabled={loading || confirmed || fee <= 0 || (fee > 0 && !paymentAvailable) || (isClubCalendar && !member)} className="btn-primary mt-6">
+        {confirmed ? "Registration Confirmed" : loading ? "Submitting..." : "Continue to Payment"}
       </button>
       {isClubCalendar && !member && <p className="mt-2 text-xs text-slate-500">Use Find Member first so the form can populate active membership details.</p>}
     </form>

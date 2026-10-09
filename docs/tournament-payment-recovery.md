@@ -27,6 +27,12 @@ If email is pending or failed, use Admin > Email Diagnostics to verify SMTP/Rese
 
 ## Checks
 
-Run `node --test tests/tournament-payments.test.cjs` and `npx tsc --noEmit`, then verify the Vercel preview build before merging. Test cases cover paid/unpaid states, metadata and amount validation, replay/concurrency, delayed payment, email failures/retries, database errors, checkout-link failure, free entries and admin permissions.
+Run `node --test tests/tournament-payments.test.cjs` and `npx tsc --noEmit`, then verify the Vercel preview build before merging. Test cases cover paid/unpaid states, metadata and amount validation, replay/concurrency, delayed payment, email failures/retries, database errors, checkout-link failure, missing fees, club-member eligibility, separate member tournament payment and admin permissions.
 
 A full real-money payment was not exercised by the automated tests. The admin diagnostic and Stripe delivery history are needed to validate the deployed account and webhook. Existing capacity checks count confirmed players at registration time; simultaneous pending checkouts do not reserve places.
+
+## Registration and event policy
+
+Club (`club_calendar`) events require an active paid/manual-paid/waived membership with a current expiry and a matching player name/email. General/open events allow everyone. All tournament registrations require the configured positive entry/category fee, including club members; membership does not waive tournament payment. Configure a fee in Admin > Tournaments or Calendar before enabling registration. Missing fees stop checkout with a clear message.
+
+Membership and tournament checkout send a registration-received acknowledgement to the registrant after the checkout has been linked. It states Pending payment and does not claim confirmation. Payment verification sends a separate confirmation using existing delivery tracking. Acknowledgement failures are logged and do not invalidate a saved checkout or take payment. Actual inbox delivery requires a working verified email provider.

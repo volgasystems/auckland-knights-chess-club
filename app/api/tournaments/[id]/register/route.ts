@@ -1,3 +1,4 @@
+import { notifyRegistrationReceived } from "@/lib/registrationNotification";
 import { NextResponse } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getStripe } from "@/lib/stripe";
@@ -8,11 +9,11 @@ function getCategories(tournament: any) {
   return Array.isArray(tournament.category_options) ? tournament.category_options : [];
 }
 function normalizeCategoryKey(value: unknown) { return String(value || "").trim(); }
-function today() { return new Date().toISOString().slice(0, 10); }
+function today() { return new Intl.DateTimeFormat("en-CA", { timeZone: "Pacific/Auckland" }).format(new Date()); }
 async function findActiveMembership(s: any, membershipId: string, email: string) {
   let query = s.from("club_memberships").select("*").in("payment_status", ["paid", "manual_paid", "waived"]).eq("membership_status", "active").gte("membership_end_date", today());
   if (membershipId) query = query.eq("membership_id", membershipId.toUpperCase());
-  else query = query.ilike("email", email);
+  else query = query.ilike("email", email.replace(/[\\%_]/g, "\\$&"));
   const { data, error } = await query.order("membership_end_date", { ascending: false }).limit(1).maybeSingle();
   if (error) throw error;
   return data;
@@ -42,44 +43,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const isClubCalendar = tournament.tournament_type === "club_calendar";
 
-    if (isClubCalendar) {
+    let membership: any = null;
+    if (tournament.tournament_type !== "general_open") {
+      if (!isClubCalendar) return NextResponse.json({ error: "This event needs its type configured by the club before registration." }, { status: 400 });
       const membershipId = String(body.membership_id || "").trim().toUpperCase();
       const membershipEmail = String(body.membership_email || body.email || "").trim().toLowerCase();
-      if (!membershipId && !membershipEmail) return NextResponse.json({ error: "Please enter membership ID or membership email." }, { status: 400 });
-      const membership = await findActiveMembership(s, membershipId, membershipEmail);
-      if (!membership) return NextResponse.json({ error: "Active paid membership was not found. Please join or renew membership before registering for this club calendar event." }, { status: 400 });
-      if (membershipEmail && String(membership.email).toLowerCase() !== membershipEmail && !membershipId) return NextResponse.json({ error: "Membership email does not match an active membership." }, { status: 400 });
-
-      const { data: registration, error } = await s.from("tournament_registrations").insert({
-        tournament_id: id,
-        first_name: body.first_name,
-        last_name: body.last_name,
-        email: body.email || membership.email,
-        phone: body.phone,
-        date_of_birth: body.date_of_birth || null,
-        nzcf_id: body.nzcf_id,
-        nzcf_rating: body.nzcf_rating ? Number(body.nzcf_rating) : null,
-        fide_id: body.fide_id,
-        fide_rating: body.fide_rating ? Number(body.fide_rating) : null,
-        club_name: body.club_name || "Auckland Knights Chess Club",
-        school_name: body.school_name,
-        parent_guardian_name: body.parent_guardian_name,
-        parent_guardian_phone: body.parent_guardian_phone,
-        street_address: body.street_address,
-        suburb: body.suburb,
-        city: body.city,
-        postcode: body.postcode,
-        membership_id: membership.membership_id,
-        is_member_registration: true,
-        membership_checked_at: new Date().toISOString(),
-        entry_fee_cents: 0,
-        payment_status: "paid",
-        registration_status: "confirmed",
-      }).select().single();
-      if (error) throw error;
-      savedRegistrationId = registration.id;
-      const emailStatus = await tryTournamentConfirmation(s, registration, tournament);
-      return NextResponse.json({ ok: true, registration_id: registration.id, email_status: emailStatus, message: `Registration confirmed using membership ${membership.membership_id}. No payment is required for this club calendar event.${emailStatus === "sent" ? " Confirmation email sent." : " Your entry is saved, but the confirmation email could not be sent yet. Contact the club if it does not arrive."}` });
+      membership = await findActiveMembership(s, membershipId, membershipEmail);
+      if (!membership || !membership.membership_id) return NextResponse.json({ error: "Active membership is required for club events. Join or renew before registering." }, { status: 400 });
+      if (String(membership.email).trim().toLowerCase() !== body.email || String(membership.first_name).trim().toLowerCase() !== body.first_name.toLowerCase() || String(membership.last_name).trim().toLowerCase() !== body.last_name.toLowerCase()) return NextResponse.json({ error: "The player name and email must match the active membership. Use the correct player membership ID or contact the club." }, { status: 400 });
     }
 
     const categoryOptions = getCategories(tournament);
@@ -91,13 +62,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const categoryName = selectedCategory ? selectedCategory.name : "General Entry";
     if (!Number.isSafeInteger(entryFeeCents) || entryFeeCents < 0) return NextResponse.json({ error: "Invalid tournament fee. Please contact the club." }, { status: 400 });
 
-    const requiresPayment = entryFeeCents > 0 || tournament.require_payment === true;
+    const requiresPayment = true;
     if (requiresPayment && entryFeeCents <= 0) return NextResponse.json({ error: "This tournament requires payment, but no fee has been configured. Please contact the club." }, { status: 400 });
 
     if (requiresPayment) assertPaymentReady();
 
     const { data: registration, error } = await s.from("tournament_registrations").insert({
       tournament_id: id,
+      membership_id: membership?.membership_id || null,
+      is_member_registration: !!membership,
+      membership_checked_at: membership ? new Date().toISOString() : null,
       first_name: body.first_name,
       last_name: body.last_name,
       email: body.email,
@@ -126,11 +100,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (error) throw error;
 
     savedRegistrationId = registration.id;
-    if (!requiresPayment) {
-      const emailStatus = await tryTournamentConfirmation(s, registration, tournament);
-      return NextResponse.json({ ok: true, registration_id: registration.id, email_status: emailStatus, message: `Registration confirmed. No payment is required.${emailStatus === "sent" ? " Confirmation email sent." : " Your entry is saved, but the confirmation email could not be sent yet. Contact the club if it does not arrive."}` });
-    }
-
     const stripe = getStripe();
     const site = paymentConfiguration().siteUrl;
     const session = await stripe.checkout.sessions.create({
@@ -147,7 +116,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       try { await stripe.checkout.sessions.expire(session.id); } catch {}
       throw new Error("Checkout session could not be linked.");
     }
-    return NextResponse.json({ url: session.url, registration_id: registration.id, payment_status: "pending_payment", registration_status: "pending_payment" });
+    const emailStatus = await notifyRegistrationReceived(s, registration, "tournament", tournament.title);
+    return NextResponse.json({ email_status: emailStatus, url: session.url, registration_id: registration.id, payment_status: "pending_payment", registration_status: "pending_payment" });
   } catch (e: any) {
     console.error("Tournament registration failed", { registration_id: savedRegistrationId || null, error_code: e?.code || "registration_error" });
     return NextResponse.json({ error: savedRegistrationId
