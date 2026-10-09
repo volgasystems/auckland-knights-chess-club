@@ -8,5 +8,6 @@ export default async function BulkEmailAdmin(){
   const s=createSupabaseServiceClient();
   const {data:templates}=await s.from("email_templates").select("*").eq("is_active", true).order("name",{ascending:true});
   const {data:members}=await s.from("club_memberships").select("*").order("created_at",{ascending:false});
-  return <BulkEmailManager templates={templates||[]} members={members||[]} providerStatus={await getEmailProviderStatus()} />;
+  const {data:tournaments}=await s.from("tournaments").select("id,title").order("start_date",{ascending:false});
+  return <BulkEmailManager tournaments={tournaments||[]} templates={templates||[]} members={members||[]} providerStatus={await getEmailProviderStatus()} />;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Template = { id: string; name: string; subject: string; body: string; template_key: string };
 type Member = {
@@ -43,7 +43,9 @@ function isActiveMember(m: Member, now = new Date()) {
 }
 function fullName(m: Member) { return `${m.first_name || ""} ${m.last_name || ""}`.trim() || m.email; }
 
-export default function BulkEmailManager({ templates, members, providerStatus }: { templates: Template[]; members: Member[]; providerStatus?: ProviderStatus }) {
+export default function BulkEmailManager({ templates, members, providerStatus, tournaments = [] }: { tournaments?: {id:string;title:string}[]; templates: Template[]; members: Member[]; providerStatus?: ProviderStatus }) {
+  const [tournamentId, setTournamentId] = useState("");
+  const [previewAction, setPreviewAction] = useState("");
   const [templateId, setTemplateId] = useState(templates[0]?.id || "");
   const [targetGroup, setTargetGroup] = useState("active");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -53,6 +55,8 @@ export default function BulkEmailManager({ templates, members, providerStatus }:
   const [loading, setLoading] = useState(false);
 
   const selectedTemplate = templates.find((t) => t.id === templateId);
+  const needsTournament = !!selectedTemplate && (/{{\s*tournament_(name|title)\s*}}/.test(`${selectedTemplate.subject} ${selectedTemplate.body}`) || ["calendar_registration","general_tournament_paid"].includes(selectedTemplate.template_key));
+  useEffect(() => { setPreview(null); setPreviewAction(""); }, [templateId,tournamentId,targetGroup,selectedIds,customMessage]);
   const usableMembers = useMemo(() => members.filter((m) => String(m.email || "").includes("@")), [members]);
 
   const filteredMembers = useMemo(() => {
@@ -71,17 +75,19 @@ export default function BulkEmailManager({ templates, members, providerStatus }:
     if (!templateId) return alert("Please select an email template.");
     if (action === "test") { if (!testEmail.includes("@")) return alert("Please enter a test email address."); }
     else if (!filteredMembers.length) return alert("No recipients matched. Try All members, All paid members or Selected individual members, or check member statuses.");
-    if (action === "send" && !confirm(`Send email to ${filteredMembers.length} recipients?`)) return;
+    if (action === "send" && needsTournament && !tournamentId) return alert("Select a tournament first.");
+    if (action === "send" && (previewAction !== "preview" || !preview?.recipient_count)) return alert("Preview matching recipients before sending.");
+    if (action === "send" && !confirm(`Send email to ${preview.recipient_count} recipients?`)) return;
     setLoading(true);
     const res = await fetch("/api/admin/bulk-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, template_id: templateId, target_group: targetGroup, selected_ids: selectedIds, custom_message: customMessage, test_email: testEmail }),
+      body: JSON.stringify({ action, tournament_id: needsTournament ? tournamentId : undefined, template_id: templateId, target_group: targetGroup, selected_ids: selectedIds, custom_message: customMessage, test_email: testEmail }),
     });
     const json = await res.json();
     setLoading(false);
     if (!res.ok) return alert(json.error || "Bulk email failed");
-    setPreview(json);
+    setPreview(json); setPreviewAction(action);
   }
 
   function toggle(id: string) { setSelectedIds((ids) => ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]); }
@@ -119,6 +125,7 @@ export default function BulkEmailManager({ templates, members, providerStatus }:
               {targetGroups.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </label>
+          {needsTournament && <label className="md:col-span-2"><span className="admin-label">Tournament</span><select value={tournamentId} onChange={e=>setTournamentId(e.target.value)} className="admin-input mt-1"><option value="">Select tournament</option>{tournaments.map(t=><option key={t.id} value={t.id}>{t.title}</option>)}</select><p className="mt-2 text-sm text-slate-600">Confirmation emails go only to matching members with confirmed, paid registrations for this tournament. Preview shows the verified recipient count. Without a tournament, tests use sample details.</p></label>}
           <label className="md:col-span-2">
             <span className="admin-label">Optional custom message for {'{{message}}'} placeholder</span>
             <textarea value={customMessage} onChange={(e) => setCustomMessage(e.target.value)} rows={4} className="admin-input mt-1" />
@@ -145,7 +152,7 @@ export default function BulkEmailManager({ templates, members, providerStatus }:
 
         <div className="mt-5 grid gap-3 rounded-lg bg-stone-50 p-4 text-sm md:grid-cols-3">
           <div><b>Total members with email:</b> {usableMembers.length}</div>
-          <div><b>Recipients matched:</b> {filteredMembers.length}</div>
+          <div><b>Members matching group:</b> {filteredMembers.length}</div>
           <div><b>Template:</b> {selectedTemplate?.name || "Not selected"}</div>
         </div>
 
@@ -168,7 +175,7 @@ export default function BulkEmailManager({ templates, members, providerStatus }:
         </div>
         <div className="mt-5 flex flex-wrap gap-3">
           <button type="button" disabled={loading} onClick={() => call("preview")} className="btn-secondary">Preview Email</button>
-          <button type="button" disabled={loading || !configured} onClick={() => call("send")} className="btn-primary">Send Bulk Email</button>
+          <button type="button" disabled={loading || !configured || previewAction !== "preview" || !preview?.recipient_count || (needsTournament && !tournamentId)} onClick={() => call("send")} className="btn-primary">Send Bulk Email</button>
         </div>
       </div>
 
