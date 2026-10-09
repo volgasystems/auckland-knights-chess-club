@@ -1,3 +1,4 @@
+import { validDateOfBirth } from "@/lib/registrationValidation";
 import { notifyRegistrationReceived } from "@/lib/registrationNotification";
 import { NextResponse } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -8,6 +9,7 @@ export async function POST(req: Request) {
   let savedMembershipId = "";
   try {
     const body = await req.json();
+    if (!validDateOfBirth(body.date_of_birth)) return NextResponse.json({ error: "Enter a valid date of birth. Date of birth is required and cannot be in the future." }, { status: 400 });
     for (const field of ["first_name", "last_name", "email", "phone"]) {
       if (typeof body[field] !== "string" || !body[field].trim()) return NextResponse.json({ error: "Enter the required player name, email and phone." }, { status: 400 });
       body[field] = body[field].trim();
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
         last_name: body.last_name,
         email: body.email,
         phone: body.phone,
-        date_of_birth: body.date_of_birth || null,
+        date_of_birth: body.date_of_birth,
         gender: body.gender,
         street_address: body.street_address,
         suburb: body.suburb,

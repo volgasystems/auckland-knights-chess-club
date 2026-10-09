@@ -129,7 +129,7 @@ test('non-admin cannot reconcile a payment', async () => {
 function registrationRoute(f, stripe) {
   return load('app/api/tournaments/[id]/register/route.ts', { '@/lib/supabase/service': { createSupabaseServiceClient: () => f.db }, '@/lib/stripe': { getStripe: () => stripe }, '@/lib/paymentConfig': config, '@/lib/tournamentPayment': f.payment, '@/lib/registrationNotification': {notifyRegistrationReceived:async()=> 'sent'} });
 }
-function registrationRequest(f, change = {}) { return new Request('https://example.invalid', { method: 'POST', body: JSON.stringify({ first_name: 'Test', last_name: 'Player', email: 'test@example.invalid', phone: 'fixture', consent: 'on', ...change }) }); }
+function registrationRequest(f, change = {}) { return new Request('https://example.invalid', { method: 'POST', body: JSON.stringify({ first_name: 'Test', last_name: 'Player', email: 'test@example.invalid', phone: 'fixture', date_of_birth: '2010-05-31', consent: 'on', ...change }) }); }
 test('valid registration links checkout and embeds session ID in return URL', async () => {
   const f = fixture(); let args;
   const stripe = { checkout: { sessions: { create: async input => { args = input; return { id: 'cs_live_newfixture', url: 'https://checkout.stripe.com/fixture' }; } } } };
@@ -151,7 +151,7 @@ test('a missing tournament fee rejects registration rather than confirming a fre
 });
 test('invalid registration fields and consent are rejected before insertion', async () => {
   const f = fixture(); const route = registrationRoute(f, {});
-  for (const change of [{ first_name: '' }, { email: 'wrong' }, { consent: '' }]) assert.equal((await route.POST(registrationRequest(f, change), { params: Promise.resolve({ id: f.tournament.id }) })).status, 400);
+  for (const change of [{ first_name: '' }, { email: 'wrong' }, { consent: '' }, { date_of_birth: '' }, { date_of_birth: '2099-01-01' }, { date_of_birth: '2026-02-30' }]) assert.equal((await route.POST(registrationRequest(f, change), { params: Promise.resolve({ id: f.tournament.id }) })).status, 400);
   assert.equal(f.db.tables.tournament_registrations.length, 1);
 });
 
