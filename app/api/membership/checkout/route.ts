@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getStripe } from "@/lib/stripe";
+import { assertPaymentReady, paymentConfiguration } from "@/lib/paymentConfig";
 
 export async function POST(req: Request) {
   try {
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
       );
     }
 
+    assertPaymentReady();
     const { data: record, error } = await s
       .from("club_memberships")
       .insert({
@@ -85,7 +87,7 @@ export async function POST(req: Request) {
     }
 
     const stripe = getStripe();
-    const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const site = paymentConfiguration().siteUrl;
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: body.email,
@@ -97,7 +99,7 @@ export async function POST(req: Request) {
           product_data: { name: item.name },
         },
       })),
-      success_url: `${site}/payment/success?type=membership&membership_id=${record.id}`,
+      success_url: `${site}/payment/success?type=membership&membership_id=${record.id}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${site}/payment/cancel?type=membership&membership_id=${record.id}`,
       metadata: { type: "membership", membership_id: record.id },
     });

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import PageShell from "@/components/PageShell";
 import TournamentRegistrationForm from "@/components/TournamentRegistrationForm";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
