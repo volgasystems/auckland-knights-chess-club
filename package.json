@@ -19,6 +19,8 @@
     "react": "latest",
     "react-dom": "latest",
     "react-easy-crop": "latest",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "stripe": "latest"
   },
   "devDependencies": {
