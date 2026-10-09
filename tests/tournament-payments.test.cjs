@@ -201,3 +201,9 @@ test('invalid registration fields and consent are rejected before insertion', as
   for (const change of [{ first_name: '' }, { email: 'wrong' }, { consent: '' }]) assert.equal((await route.POST(registrationRequest(f, change), { params: Promise.resolve({ id: f.tournament.id }) })).status, 400);
   assert.equal(f.db.tables.tournament_registrations.length, 1);
 });
+
+test('email uses the published event date, venue and address', async () => {
+  const f = fixture(); f.tournament.date_display = '7 November 2026'; f.tournament.venue_name = 'Howick Library'; f.tournament.venue_address = '25 Uxbridge Road';
+  await f.payment.sendTournamentConfirmation(f.db, f.entry, f.tournament);
+  assert.ok(f.sends[0].text.includes('7 November 2026')); assert.ok(f.sends[0].text.includes('Howick Library')); assert.ok(f.sends[0].text.includes('25 Uxbridge Road'));
+});
