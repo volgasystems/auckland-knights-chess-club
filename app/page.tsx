@@ -1,3 +1,6 @@
+// Tournament data is managed in admin and must be read on every request.
+export const dynamic = "force-dynamic";
+
 import PageShell from "@/components/PageShell";
 import Hero from "@/components/Hero";
 import FeatureStrip from "@/components/FeatureStrip";
