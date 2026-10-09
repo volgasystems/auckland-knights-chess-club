@@ -24,6 +24,7 @@
     "stripe": "latest"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@tailwindcss/postcss": "latest",
     "@types/node": "latest",
     "@types/nodemailer": "latest",

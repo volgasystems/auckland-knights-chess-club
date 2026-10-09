@@ -15,6 +15,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Enter Membership ID or registered email address." }, { status: 400 });
     }
 
+    if ((membershipId && !/^[A-Z0-9-]{2,30}$/.test(membershipId)) || (memberEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(memberEmail))) return NextResponse.json({ error: "Enter a valid membership ID or email." }, { status: 400 });
     const s = createSupabaseServiceClient();
     let query = s
       .from("club_memberships")
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
       .gte("membership_end_date", today());
 
     if (membershipId) query = query.eq("membership_id", membershipId);
-    else query = query.ilike("email", memberEmail);
+    else query = query.ilike("email", memberEmail.replace(/[\\%_]/g, "\\$&"));
 
     const { data, error } = await query
       .order("membership_end_date", { ascending: false })

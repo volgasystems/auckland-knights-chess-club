@@ -53,6 +53,10 @@ export async function POST(req: Request){
   const s=createSupabaseServiceClient();
   const clean:any={...payload, updated_at:new Date().toISOString()};
 
+  if (table === "club_settings") {
+    // Only the dedicated numbering RPC can change these; stale settings forms cannot reset the counter.
+    for (const field of ["membership_id_prefix", "membership_id_start", "membership_id_next", "membership_id_digits"]) delete clean[field];
+  }
   Object.keys(clean).forEach(k=>{
     if(clean[k]==="") clean[k]=null;
     if(numericFields.has(k) && clean[k] !== null && clean[k] !== undefined) clean[k]=Number(clean[k]);

@@ -1,37 +1,9 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { sendEmail } from "@/lib/email";
+import { confirmMembershipPayment } from "@/lib/membershipPayment";
 import { confirmTournamentPayment, tryTournamentConfirmation } from "@/lib/tournamentPayment";
 import { paymentConfiguration } from "@/lib/paymentConfig";
-
-function endOfCurrentMembershipYear() {
-  const now = new Date();
-  const end = new Date(Date.UTC(now.getUTCFullYear(), 11, 31));
-  return end.toISOString().slice(0, 10);
-}
-function todayISO() { return new Date().toISOString().slice(0, 10); }
-function render(template: string, values: Record<string, any>) {
-  return String(template || "").replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_, key) => String(values[key] ?? ""));
-}
-
-async function sendMembershipConfirmation(s: any, membership: any) {
-  try {
-    const { data: tmpl } = await s.from("email_templates").select("*").eq("template_key", "membership_confirmation").eq("is_active", true).maybeSingle();
-    if (!tmpl) return;
-    const values = {
-      first_name: membership.first_name,
-      last_name: membership.last_name,
-      full_name: `${membership.first_name || ""} ${membership.last_name || ""}`.trim(),
-      email: membership.email,
-      membership_id: membership.membership_id,
-      membership_start_date: membership.membership_start_date,
-      membership_end_date: membership.membership_end_date,
-      club_name: "Auckland Knights Chess Club",
-    };
-    await sendEmail({ to: membership.email, subject: render(tmpl.subject, values), html: `<pre style="font-family:Arial,sans-serif;white-space:pre-wrap">${render(tmpl.body, values)}</pre>` });
-  } catch {}
-}
 
 export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
@@ -53,27 +25,8 @@ export async function POST(req: Request) {
         if (result.email_status !== "sent") throw new Error("Confirmation email pending; retry delivery");
       }
       if (type === "membership") {
-        const id = session.metadata?.membership_id;
-        const { data: existing, error: lookupError } = await s.from("club_memberships").select("*").eq("id", id).single();
-        if (lookupError) throw lookupError;
-        let membershipId = existing.membership_id;
-        if (!membershipId) {
-          const { data: generated, error } = await s.rpc("generate_membership_id");
-          if (error) throw error;
-          membershipId = generated;
-        }
-        const { data: updated, error } = await s.from("club_memberships").update({
-          payment_status: "paid", membership_status: "active", membership_id: membershipId,
-          membership_start_date: existing.membership_start_date || todayISO(),
-          membership_end_date: existing.membership_end_date || endOfCurrentMembershipYear(),
-          stripe_payment_intent_id: String(session.payment_intent || ""), updated_at: new Date().toISOString()
-        }).eq("id", id).select("*").single();
-        if (error) throw error;
-        const { data: existingRecord, error: recordLookupError } = await s.from("payment_records").select("id").eq("stripe_checkout_session_id", session.id).limit(1).maybeSingle();
-        if (recordLookupError) throw recordLookupError;
-        const { error: recordError } = existingRecord ? { error: null } : await s.from("payment_records").upsert({ id, payment_type: "membership", reference_id: id, email: session.customer_email, amount_cents: session.amount_total, status: "paid", stripe_checkout_session_id: session.id, stripe_payment_intent_id: String(session.payment_intent || "") }, { onConflict: "id", ignoreDuplicates: true });
-        if (recordError) throw recordError;
-        if (existing.payment_status !== "paid") await sendMembershipConfirmation(s, updated);
+        const result = await confirmMembershipPayment(s, session);
+        if (result.email_status !== "sent") throw new Error("Membership email pending; retry delivery");
       }
     }
     if (["checkout.session.expired", "checkout.session.async_payment_failed"].includes(event.type)) {
