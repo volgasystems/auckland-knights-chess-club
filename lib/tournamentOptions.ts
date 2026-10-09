@@ -75,3 +75,10 @@ export function displayRatingFormat(t: any) {
 export function displayRatingType(t: any) {
   return t?.rating_type || "Rating type TBC";
 }
+
+// Prefer the standard dropdown selection; use the numeric field for Custom/legacy records.
+export function tournamentRounds(t: any): number | null {
+  const selected = String(t?.rounds_display ?? "").trim();
+  const value = /^\d+$/.test(selected) ? Number(selected) : Number(t?.rounds);
+  return Number.isInteger(value) && value > 0 ? value : null;
+}

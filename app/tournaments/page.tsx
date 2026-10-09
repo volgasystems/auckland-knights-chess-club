@@ -5,7 +5,7 @@ import PageShell from "@/components/PageShell";
 import Link from "next/link";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { formatDate, formatMoney } from "@/lib/format";
-import { displayRatingFormat, displayRatingType, displayTournamentSystem } from "@/lib/tournamentOptions";
+import { displayRatingFormat, displayRatingType, displayTournamentSystem, tournamentRounds } from "@/lib/tournamentOptions";
 
 function categories(t:any){ return Array.isArray(t.category_options) ? t.category_options : []; }
 function feeLabel(t:any){ if (t.tournament_type === "club_calendar") return "Covered by active membership"; const cats = categories(t); if (cats.length) { const fees = cats.map((c:any)=>Number(c.fee_cents||0)).filter(Boolean); if (fees.length) return `From ${formatMoney(Math.min(...fees))}`; } return t.entry_fee_cents ? formatMoney(t.entry_fee_cents) : "Fee TBC"; }
@@ -36,11 +36,11 @@ export default async function TournamentsPage() {
           <h2 className="mb-6 text-3xl font-extrabold">{year} Tournaments</h2>
           <div className="space-y-9">
             {(byYear.get(year)||[]).map((t:any)=><article key={t.id}>
-              {(t.tournament_image_url || t.image_url) && <Link href={`/tournaments/${t.slug}`} className="mb-4 block"><img src={t.tournament_image_url || t.image_url} alt={`${t.title} tournament banner`} className="h-auto max-h-[640px] w-full rounded-xl bg-stone-50 object-contain" loading="lazy" /></Link>}
+              {(t.tournament_image_url || t.image_url) && <Link href={`/tournaments/${t.slug}`} className="mb-4 block"><img src={t.tournament_image_url || t.image_url} alt={`${t.title} tournament banner`} className="h-auto max-h-[240px] w-full max-w-md rounded-xl bg-stone-50 object-contain" loading="lazy" /></Link>}
               <h3 className="text-xl font-extrabold"><Link href={`/tournaments/${t.slug}`} className="hover:text-amber-700">{t.title}</Link> <span className="font-normal text-stone-700">{t.date_display ? `(${t.date_display})` : t.start_date ? `(${formatDate(t.start_date)})` : ""}</span></h3>
               {(t.rating_format || t.time_control || t.custom_time_control || t.rounds || t.tournament_system || t.tournament_format || t.rating_type) && <div className="mt-2 space-y-1 text-lg text-stone-800">
                 <p>{displayRatingFormat(t)}{t.time_control || t.custom_time_control ? ` · ${t.time_control || t.custom_time_control}` : ""}</p>
-                {t.rounds ? <p>{t.rounds} rounds</p> : null}
+                {tournamentRounds(t) ? <p>{tournamentRounds(t)} rounds</p> : null}
                 <p>{displayTournamentSystem(t)} · {displayRatingType(t)}</p>
               </div>}
               <p className="text-lg text-stone-800">{t.lichess_url && <><a className="underline" target="_blank" rel="noreferrer" href={t.lichess_url}>Lichess broadcast</a></>}{t.pgn_url && <> – <a className="underline" target="_blank" rel="noreferrer" href={t.pgn_url}>PGN</a></>}{t.vega_url && <> – <a className="underline" target="_blank" rel="noreferrer" href={t.vega_url}>Vega</a></>}</p>
