@@ -95,8 +95,8 @@ function MultiOptions({ field, value, onChange }: { field: Field; value: string[
   return <div className="rounded-xl border border-stone-200 bg-stone-50 p-4"><span className="admin-label">{field.label}</span>{field.help && <p className="mt-1 text-xs text-slate-600">{field.help}</p>}<div className="mt-3 flex flex-wrap gap-3">{(field.options || []).map((option) => <label key={option} className="flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-semibold shadow-sm"><input type="checkbox" checked={selected.includes(option)} onChange={() => toggle(option)} />{option}</label>)}</div></div>;
 }
 
-export default function CrudManager({ table, title, fields, rows, meetingLabels }: { table: string; title: string; fields: Field[]; rows: any[]; meetingLabels?: Record<string, string> }) {
-  const empty = Object.fromEntries(fields.map((f) => [f.name, initialValue(f)]));
+export default function CrudManager({ table, title, fields, rows, meetingLabels, initialValues = {} }: { table: string; title: string; fields: Field[]; rows: any[]; meetingLabels?: Record<string, string>; initialValues?: Record<string, any> }) {
+  const empty = { ...Object.fromEntries(fields.map((f) => [f.name, initialValue(f)])), ...initialValues };
   const [form, setForm] = useState<any>(empty);
   const [editing, setEditing] = useState<any>(null);
   const [loading, setLoading] = useState(false);

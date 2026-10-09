@@ -1,6 +1,8 @@
 // Tournament data is managed in admin and must be read on every request.
 export const dynamic = "force-dynamic";
 
+import GalleryAlbums from "@/components/GalleryAlbums";
+import { galleryAlbums } from "@/lib/gallery";
 import PageShell from "@/components/PageShell";
 import Hero from "@/components/Hero";
 import FeatureStrip from "@/components/FeatureStrip";
@@ -12,10 +14,11 @@ import { formatDate } from "@/lib/format";
 
 export default async function HomePage() {
   const service = createSupabaseServiceClient();
-  const [{ data: tournaments }, { data: news }, { data: settings }] = await Promise.all([
+  const [{ data: tournaments }, { data: news }, { data: settings }, { data: galleryPhotos }] = await Promise.all([
     service.from("tournaments").select("*").eq("tournament_type", "general_open").in("status", ["open", "closed"]).order("start_date", { ascending: true }).limit(9),
     service.from("news_posts").select("*").eq("is_published", true).order("published_at", { ascending: false }).limit(3),
-    service.from("club_settings").select("*").eq("id", "default").maybeSingle()
+    service.from("club_settings").select("*").eq("id", "default").maybeSingle(),
+    service.from("gallery_photos").select("*").eq("is_published", true).order("event_date", { ascending: false }).order("created_at", { ascending: false })
   ]);
   const mapAddress = settings?.club_address || "East Auckland, New Zealand";
   const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapAddress)}&output=embed`;
@@ -49,6 +52,7 @@ export default async function HomePage() {
           </div>
         </section>
       </div>
+      <section className="mt-10"><div className="flex items-center justify-between gap-4"><h2 className="text-2xl font-extrabold">Event Photo Gallery</h2><Link href="/photo-gallery" className="font-bold">View All Events</Link></div>{galleryPhotos?.length ? <GalleryAlbums albums={galleryAlbums(galleryPhotos).slice(0, 3)} /> : <p className="card mt-5 p-5 text-stone-600">Event albums will appear here when photos are published.</p>}</section>
       <section className="mt-10 grid gap-6 lg:grid-cols-2">
         <div className="card p-6">
           <h2 className="text-2xl font-extrabold">Find Us</h2>

@@ -1,2 +1,10 @@
-import { requireAdmin } from "@/lib/auth"; import { createSupabaseServiceClient } from "@/lib/supabase/service"; import CrudManager from "@/components/admin/CrudManager";
-export default async function GalleryAdmin(){ await requireAdmin("gallery"); const s=createSupabaseServiceClient(); const {data}=await s.from("gallery_photos").select("*").order("created_at",{ascending:false}); return <CrudManager table="gallery_photos" title="Manage Photo Gallery" rows={data||[]} fields={[{name:'title',label:'Title',required:true},{name:'description',label:'Description',textarea:true},{name:'event_date',label:'Event date',type:'date'},{name:'image_url',label:'Photo',type:'image',imageBucket:'gallery-images'},{name:'is_published',label:'Publish photo',type:'checkbox'}]} /> }
+import { requireAdmin } from "@/lib/auth";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import EventGalleryManager from "@/components/admin/EventGalleryManager";
+export default async function GalleryAdmin() {
+  await requireAdmin("gallery");
+  const s = createSupabaseServiceClient();
+  const [{ data, error }, { error: schemaError }] = await Promise.all([s.from("gallery_photos").select("*").order("created_at", { ascending: false }), s.from("gallery_photos").select("event_name").limit(0)]);
+  if (error) throw new Error("Unable to load gallery photos. Please try again.");
+  return <EventGalleryManager rows={data || []} ready={!schemaError} />;
+}

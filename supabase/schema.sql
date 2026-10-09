@@ -642,3 +642,9 @@ select public.configure_membership_numbering(
   coalesce(nullif(membership_id_prefix, ''), 'AKCC'), membership_id_start, membership_id_digits
 ) from public.club_settings where id = 'default';
 commit;
+
+-- Add event albums while retaining every existing photo and publication status.
+begin;
+alter table public.gallery_photos add column if not exists event_name text;
+create index if not exists gallery_photos_event_album_idx on public.gallery_photos(event_name, event_date);
+commit;
