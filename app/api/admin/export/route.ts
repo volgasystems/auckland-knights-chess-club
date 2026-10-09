@@ -1,3 +1,4 @@
+import { applyMemberSearch } from "@/lib/memberSearch";
 import { NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/auth";
 import { canAccess } from "@/lib/roles";
@@ -16,12 +17,16 @@ async function getRows(type: ReportType, role: string, params: FilterParams) {
   if (type === "members") {
     if (!canAccess(role, "members")) throw new Error("Permission denied");
     let q = s.from("club_memberships").select("*");
+    q = applyMemberSearch(q, params.get("search"));
+    const memberStatus = params.get("membership_status");
+    if (memberStatus) q = q.eq("membership_status", memberStatus);
     const paymentStatus = params.get("payment_status");
     const membershipType = params.get("membership_type");
     const sort = params.get("sort") || "created_at_desc";
     if (paymentStatus) q = q.eq("payment_status", paymentStatus);
     if (membershipType) q = q.contains("membership_options", [{ key: membershipType }]);
-    if (sort === "nzcf_desc") q = q.order("nzcf_rating", { ascending: false, nullsFirst: false });
+    if (sort === "name") q = q.order("last_name").order("first_name");
+    else if (sort === "nzcf_desc") q = q.order("nzcf_rating", { ascending: false, nullsFirst: false });
     else if (sort === "nzcf_asc") q = q.order("nzcf_rating", { ascending: true, nullsFirst: false });
     else if (sort === "fide_desc") q = q.order("fide_rating", { ascending: false, nullsFirst: false });
     else if (sort === "fide_asc") q = q.order("fide_rating", { ascending: true, nullsFirst: false });

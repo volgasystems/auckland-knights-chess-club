@@ -4,8 +4,15 @@ import { getStripe } from "@/lib/stripe";
 import { assertPaymentReady, paymentConfiguration } from "@/lib/paymentConfig";
 
 export async function POST(req: Request) {
+  let savedMembershipId = "";
   try {
     const body = await req.json();
+    for (const field of ["first_name", "last_name", "email", "phone"]) {
+      if (typeof body[field] !== "string" || !body[field].trim()) return NextResponse.json({ error: "Enter the required player name, email and phone." }, { status: 400 });
+      body[field] = body[field].trim();
+    }
+    body.email = body.email.toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email) || !body.terms_accepted) return NextResponse.json({ error: "Enter a valid email and accept the membership terms." }, { status: 400 });
     const s = createSupabaseServiceClient();
 
     const { data: dbOptions, error: optErr } = await s
@@ -26,7 +33,7 @@ export async function POST(req: Request) {
 
     const selected = (body.items || [])
       .map((item: any) => ({ key: item.key, quantity: Number(item.quantity || 0) }))
-      .filter((item: any) => item.quantity > 0 && priceMap.has(item.key));
+      .filter((item: any) => Number.isInteger(item.quantity) && item.quantity > 0 && item.quantity <= 10 && priceMap.has(item.key));
 
     if (!selected.length) {
       return NextResponse.json({ error: "Select at least one membership option" }, { status: 400 });
@@ -86,6 +93,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    savedMembershipId = record.id;
     const stripe = getStripe();
     const site = paymentConfiguration().siteUrl;
     const session = await stripe.checkout.sessions.create({
@@ -104,10 +112,8 @@ export async function POST(req: Request) {
       metadata: { type: "membership", membership_id: record.id },
     });
 
-    await s
-      .from("club_memberships")
-      .update({ stripe_checkout_session_id: session.id, updated_at: new Date().toISOString() })
-      .eq("id", record.id);
+    const { error: sessionError } = await s.from("club_memberships").update({ stripe_checkout_session_id: session.id, updated_at: new Date().toISOString() }).eq("id", record.id);
+    if (sessionError || !session.url) { try { await stripe.checkout.sessions.expire(session.id); } catch {} throw new Error("Checkout link could not be saved"); }
 
     return NextResponse.json({
       url: session.url,
@@ -115,6 +121,6 @@ export async function POST(req: Request) {
       payment_status: "pending_payment",
     });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: `Membership could not be completed.${savedMembershipId ? ` Reference: ${savedMembershipId}.` : ""} If payment was taken, do not pay again. Contact info@aucklandknights.co.nz.`, membership_id: savedMembershipId || undefined }, { status: 503 });
   }
 }
