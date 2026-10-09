@@ -1,7 +1,6 @@
 // Tournament data is managed in admin and must be read on every request.
 export const dynamic = "force-dynamic";
 
-import MembershipRenewal from "@/components/MembershipRenewal";
 import GalleryAlbums from "@/components/GalleryAlbums";
 import { galleryAlbums } from "@/lib/gallery";
 import PageShell from "@/components/PageShell";
@@ -15,12 +14,11 @@ import { formatDate } from "@/lib/format";
 
 export default async function HomePage() {
   const service = createSupabaseServiceClient();
-  const [{ data: tournaments }, { data: news }, { data: settings }, { data: galleryPhotos }, { data: membershipOptions }] = await Promise.all([
+  const [{ data: tournaments }, { data: news }, { data: settings }, { data: galleryPhotos }] = await Promise.all([
     service.from("tournaments").select("*").eq("tournament_type", "general_open").in("status", ["open", "closed"]).order("start_date", { ascending: true }).limit(9),
     service.from("news_posts").select("*").eq("is_published", true).order("published_at", { ascending: false }).limit(3),
     service.from("club_settings").select("*").eq("id", "default").maybeSingle(),
-    service.from("gallery_photos").select("*").eq("is_published", true).order("event_date", { ascending: false }).order("created_at", { ascending: false }),
-    service.from("membership_options").select("key,name,fee_cents,validity_months,valid_until_month").eq("is_active", true).order("display_order", { ascending: true })
+    service.from("gallery_photos").select("*").eq("is_published", true).order("event_date", { ascending: false }).order("created_at", { ascending: false })
   ]);
   const mapAddress = settings?.club_address || "East Auckland, New Zealand";
   const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapAddress)}&output=embed`;
@@ -29,7 +27,7 @@ export default async function HomePage() {
     <Hero />
     <FeatureStrip />
     <main className="container-page py-10">
-      <MembershipRenewal member={null} options={membershipOptions || []} />
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-stone-100 p-5"><p className="font-bold">Join the club, find your member record or renew membership.</p><Link href="/join#membership-search" className="btn-primary">Join Now / Find Member</Link></div>
       <div className="grid gap-8 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between gap-4">
