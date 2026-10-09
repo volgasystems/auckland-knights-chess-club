@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export async function POST(req: Request) {
   try {
     const { membership_id, email } = await req.json();
@@ -19,10 +15,7 @@ export async function POST(req: Request) {
     const s = createSupabaseServiceClient();
     let query = s
       .from("club_memberships")
-      .select("id,membership_id,first_name,last_name,email,phone,date_of_birth,nzcf_id,nzcf_rating,fide_id,fide_rating,school,parent_guardian_phone,parent_guardian_first_name,parent_guardian_last_name,street_address,suburb,city,postcode,membership_status,payment_status,membership_start_date,membership_end_date")
-      .in("payment_status", ["paid", "manual_paid", "waived"])
-      .eq("membership_status", "active")
-      .gte("membership_end_date", today());
+      .select("id,membership_id,first_name,last_name,email,phone,date_of_birth,nzcf_id,nzcf_rating,fide_id,fide_rating,school,parent_guardian_phone,parent_guardian_first_name,parent_guardian_last_name,street_address,suburb,city,postcode,membership_status,payment_status,membership_start_date,membership_end_date");
 
     if (membershipId) query = query.eq("membership_id", membershipId);
     else query = query.ilike("email", memberEmail.replace(/[\\%_]/g, "\\$&"));
@@ -35,7 +28,7 @@ export async function POST(req: Request) {
     if (error) throw error;
     if (!data) {
       return NextResponse.json(
-        { error: "No active paid membership found. Please check the Membership ID/email or renew membership." },
+        { error: "No membership record found. Please check the Membership ID/email or join the club." },
         { status: 404 }
       );
     }

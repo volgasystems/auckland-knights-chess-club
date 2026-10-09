@@ -8,11 +8,16 @@ export type ReportColumn = {
 
 export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
   members: [
-    { key: "name", label: "Member Name", value: (m) => `${m.first_name || ""} ${m.last_name || ""}`.trim() },
+    { key: "name", label: "Name", value: (m) => `${m.first_name || ""} ${m.last_name || ""}`.trim() },
+    { key: "payable", label: "Payable", value: (m) => `$${(Number(m.total_amount_cents || 0)/100).toFixed(2)}` },
+    { key: "paid", label: "Paid", value: (m) => `$${(["paid", "manual_paid"].includes(m.payment_status) ? Number(m.total_amount_cents || 0)/100 : 0).toFixed(2)}` },
+    { key: "balance", label: "Balance", value: (m) => `$${(["paid", "manual_paid", "waived"].includes(m.payment_status) ? 0 : Number(m.total_amount_cents || 0)/100).toFixed(2)}` },
+    { key: "notes", label: "Notes", value: (m) => m.notes || "" },
+    { key: "person_id", label: "Person ID", value: (m) => m.id },
     { key: "email", label: "Email", value: (m) => m.email },
     { key: "phone", label: "Phone", value: (m) => m.phone },
     { key: "membership_id", label: "Membership ID", value: (m) => m.membership_id },
-    { key: "membership_status", label: "Membership Status", value: (m) => m.membership_status },
+    { key: "membership_status", label: "Status", value: (m) => m.membership_status },
     { key: "membership_end_date", label: "Expiry Date", value: (m) => m.membership_end_date },
     { key: "school", label: "School", value: (m) => m.school },
     { key: "parent_guardian", label: "Parent/Guardian", value: (m) => [m.parent_guardian_first_name, m.parent_guardian_last_name].filter(Boolean).join(" ") || m.parent_guardian_name },
@@ -22,7 +27,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "fide_rating", label: "FIDE Rating", value: (m) => m.fide_rating },
     { key: "payment_status", label: "Payment", value: (m) => m.payment_status },
     { key: "amount", label: "Amount", value: (m) => m.total_amount_cents != null ? `$${(Number(m.total_amount_cents)/100).toFixed(2)}` : "" },
-    { key: "registered", label: "Registered", value: (m) => m.created_at ? new Date(m.created_at).toLocaleDateString("en-NZ") : "" }
+    { key: "registered", label: "Date Registered", value: (m) => m.created_at ? new Date(m.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" }
   ],
   tournament_registrations: [
     { key: "tournament", label: "Tournament", value: (r) => r.tournament_title || r.tournaments?.title },
@@ -63,7 +68,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
 };
 
 export const DEFAULT_COLUMNS: Record<ReportType, string[]> = {
-  members: ["name", "email", "phone", "membership_id", "membership_status", "membership_end_date", "nzcf_id", "nzcf_rating", "fide_id", "fide_rating", "payment_status", "amount", "registered"],
+  members: ["name", "registered", "payable", "paid", "balance", "notes", "person_id", "membership_status", "email"],
   tournament_registrations: ["tournament", "category", "membership_id", "player", "email", "phone", "nzcf_rating", "fide_rating", "payment_status", "registration_status", "fee"],
   absences: ["player", "tournament", "round", "round_date", "reason", "email", "phone", "status"],
   payments: ["type", "name", "email", "amount", "status", "date"]
@@ -78,8 +83,7 @@ export function selectedColumnKeys(input: any, type: ReportType): string[] {
 }
 
 export function selectedColumns(type: ReportType, keys: string[]) {
-  const wanted = new Set(keys);
-  return REPORT_COLUMNS[type].filter((c) => wanted.has(c.key));
+  return keys.map(key => REPORT_COLUMNS[type].find(c => c.key === key)).filter((c): c is ReportColumn => !!c);
 }
 
 export function rowsForColumns(rows: any[], type: ReportType, keys: string[]) {

@@ -30,6 +30,7 @@ type MemberLookup = {
   postcode?: string;
   membership_end_date?: string;
   membership_status?: string;
+  payment_status?: string;
 };
 
 export default function TournamentRegistrationForm({ tournament }: { tournament: any }) {
@@ -79,7 +80,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
     const json = await res.json();
     setLookupLoading(false);
     if (!res.ok) {
-      setLookupMessage(json.error || "Active membership was not found.");
+      setLookupMessage(json.error || "Membership record was not found.");
       return;
     }
     setMember(json.member);
@@ -89,7 +90,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
       city: json.member?.city || "",
       postcode: json.member?.postcode || "",
     });
-    setLookupMessage(`Active membership found: ${json.member.membership_id || ""} ${json.member.first_name || ""} ${json.member.last_name || ""}`);
+    setLookupMessage(`Membership record found: ${json.member.membership_id || ""} ${json.member.first_name || ""} ${json.member.last_name || ""}`);
   }
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -141,6 +142,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
       {paymentMode === "test" && <p className="mt-3 font-bold text-amber-800">Test checkout: this does not take a real payment or confirm a live paid entry.</p>}
       <p className="mt-3 text-sm text-slate-600">Current fee: <b>{fee > 0 ? formatMoney(fee) : "Not configured — contact the club"}</b>.</p>
 
+      <p className="mt-4 text-sm"><a href="/join" className="font-bold underline">Join or renew Auckland Knights membership</a></p>
       {isClubCalendar && (
         <div className="mt-5 rounded-xl bg-green-50 p-4">
           <label>
@@ -157,6 +159,8 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
             <div className="mt-4 rounded-xl border border-green-200 bg-white p-4 text-sm">
               <div className="grid gap-2 sm:grid-cols-2">
                 <p><b>Membership ID:</b> {member.membership_id}</p>
+                <p><b>Payment:</b> {member.payment_status || "Unknown"}</p>
+                <p><b>Status:</b> {member.membership_status || "Unknown"}</p>
                 <p><b>Expires:</b> {member.membership_end_date || "TBC"}</p>
                 <p><b>Name:</b> {member.first_name} {member.last_name}</p>
                 <p><b>Email:</b> {member.email}</p>
@@ -164,7 +168,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
                 <p><b>NZCF:</b> {member.nzcf_id || ""} {member.nzcf_rating ? `(${member.nzcf_rating})` : ""}</p>
                 <p><b>FIDE:</b> {member.fide_id || ""} {member.fide_rating ? `(${member.fide_rating})` : ""}</p>
               </div>
-              <p className="mt-3 text-xs text-green-800">Please review the details below and continue to tournament payment.</p>
+              <p className="mt-3 text-xs text-green-800">Please review your details. Club entry requires current active paid or waived membership; unpaid or expired members must complete membership first. Tournament fees are separate.</p>
             </div>
           )}
           <input type="hidden" name="membership_id" value={member?.membership_id || (!memberIdentifier.includes("@") ? memberIdentifier.toUpperCase() : "")} />
