@@ -68,9 +68,15 @@ export async function POST(req: Request){
   if(table==='membership_options' && clean.name && !clean.key) clean.key=slugify(clean.name).replace(/-/g,'_');
   if(table==='email_templates' && clean.name && !clean.template_key) clean.template_key=slugify(clean.name).replace(/-/g,'_');
 
+  if (['agm_decisions', 'elected_team_members'].includes(table) && ['create', 'update'].includes(action)) {
+    if (!clean.meeting_id) return NextResponse.json({error:'Select an AGM meeting'},{status:400});
+    if (table === 'agm_decisions' && !clean.outcome) clean.outcome = 'Approved';
+    if (table === 'elected_team_members' && clean.display_order == null) clean.display_order = 0;
+  }
+
   if(action==='create'){
     if(table==='club_settings') clean.id='default';
-    if(!['membership_options'].includes(table)) clean.created_by=admin.user.id;
+    if(!['membership_options','agm_decisions','elected_team_members'].includes(table)) clean.created_by=admin.user.id;
     const {data,error}=await s.from(table).insert(clean).select().single();
     if(error) return NextResponse.json({error:error.message},{status:400});
     await maybeCreateSocialDraft(s, table, data, clean, admin.user.id);
