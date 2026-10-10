@@ -30,10 +30,10 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "registered", label: "Date Registered", value: (m) => m.created_at ? new Date(m.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" }
   ],
   tournament_registrations: [
-    { key: "tournament", label: "Tournament", value: (r) => r.tournament_title || r.tournaments?.title },
+    { key: "tournament", label: "Tournament Name", value: (r) => r.tournament_title || r.tournaments?.title },
     { key: "category", label: "Category", value: (r) => r.category_name || (r.is_member_registration ? "Membership Event" : "General") },
     { key: "membership_id", label: "Member ID", value: (r) => r.membership_id },
-    { key: "player", label: "Player", value: (r) => `${r.first_name || ""} ${r.last_name || ""}`.trim() },
+    { key: "player", label: "Name", value: (r) => `${r.first_name || ""} ${r.last_name || ""}`.trim() },
     { key: "email", label: "Email", value: (r) => r.email },
     { key: "phone", label: "Phone", value: (r) => r.phone },
     { key: "club_school", label: "Club/School", value: (r) => r.club_name || r.school_name },
@@ -41,10 +41,13 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "nzcf_rating", label: "NZCF Rating", value: (r) => r.nzcf_rating },
     { key: "fide_id", label: "FIDE ID", value: (r) => r.fide_id },
     { key: "fide_rating", label: "FIDE Rating", value: (r) => r.fide_rating },
-    { key: "payment_status", label: "Payment", value: (r) => r.payment_status },
-    { key: "registration_status", label: "Status", value: (r) => r.registration_status },
+    { key: "payment_status", label: "Payment", value: (r) => memberStatusLabel(r.payment_status) },
+    { key: "registration_status", label: "Status", value: (r) => memberStatusLabel(r.registration_status) },
     { key: "fee", label: "Fee", value: (r) => `$${(Number(r.entry_fee_cents || r.category_fee_cents || 0)/100).toFixed(2)}` },
-    { key: "registered", label: "Registered", value: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString("en-NZ") : "" }
+    { key: "registered", label: "Date Registered", value: (r) => r.created_at ? new Date(r.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" },
+    { key: "payable", label: "Payable", value: (r) => `$${(Number(r.entry_fee_cents ?? r.category_fee_cents ?? 0)/100).toFixed(2)}` },
+    { key: "paid", label: "Paid", value: (r) => `$${(["paid", "manual_paid"].includes(r.payment_status) ? Number(r.entry_fee_cents ?? r.category_fee_cents ?? 0)/100 : 0).toFixed(2)}` },
+    { key: "balance", label: "Balance", value: (r) => `$${(["paid", "manual_paid", "waived"].includes(r.payment_status) ? 0 : Number(r.entry_fee_cents ?? r.category_fee_cents ?? 0)/100).toFixed(2)}` }
   ],
   absences: [
     { key: "player", label: "Player", value: (a) => `${a.player_first_name || ""} ${a.player_last_name || ""}`.trim() },
@@ -69,7 +72,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
 
 export const DEFAULT_COLUMNS: Record<ReportType, string[]> = {
   members: ["name", "registered", "payable", "paid", "balance", "membership_id", "membership_status", "email"],
-  tournament_registrations: ["tournament", "category", "membership_id", "player", "email", "phone", "nzcf_rating", "fide_rating", "payment_status", "registration_status", "fee"],
+  tournament_registrations: ["player", "tournament", "registered", "payable", "paid", "balance", "membership_id", "registration_status", "email", "phone"],
   absences: ["player", "tournament", "round", "round_date", "reason", "email", "phone", "status"],
   payments: ["type", "name", "email", "amount", "status", "date"]
 };
@@ -79,7 +82,9 @@ export function selectedColumnKeys(input: any, type: ReportType): string[] {
   const raw = Array.isArray(input) ? input.join(",") : String(input);
   const valid = new Set(REPORT_COLUMNS[type].map((c) => c.key));
   const keys = raw.split(",").map((v) => v.trim()).filter((v) => valid.has(v));
-  return keys.length ? keys : DEFAULT_COLUMNS[type];
+  const selected = keys.length ? [...new Set(keys)] : [...DEFAULT_COLUMNS[type]];
+  if (type === "tournament_registrations") for (const required of ["tournament", "phone"]) if (!selected.includes(required)) selected.push(required);
+  return selected;
 }
 
 export function selectedColumns(type: ReportType, keys: string[]) {

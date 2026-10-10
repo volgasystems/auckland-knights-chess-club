@@ -1,3 +1,4 @@
+import PdfPreview from "@/components/admin/PdfPreview";
 import PaymentDiagnostics from "@/components/admin/PaymentDiagnostics";
 import RegistrationPaymentCheck from "@/components/admin/RegistrationPaymentCheck";
 import { requireAdmin } from "@/lib/auth";
@@ -40,7 +41,7 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
 
   return (
     <div>
-      <h1 className="text-3xl font-extrabold">General Tournament Registrations</h1>
+      <h1 className="text-3xl font-extrabold">Tournament Registrations</h1>
       <p className="mt-2 text-stone-600">Choose filters and columns before exporting. Public entries show only paid and confirmed players.</p>
 
       <PaymentDiagnostics />
@@ -52,20 +53,20 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
           <button className="btn-primary py-2">Preview Report</button>
         </div>
 
-        <div><p className="admin-label mb-2">Choose report columns</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{REPORT_COLUMNS.tournament_registrations.map((c) => <label key={c.key} className="flex items-center gap-2 rounded-lg border border-stone-200 p-2 text-sm"><input type="checkbox" name="columns" value={c.key} defaultChecked={keys.includes(c.key)} />{c.label}</label>)}</div></div>
+        <div><p className="admin-label mb-2">Choose report columns</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{REPORT_COLUMNS.tournament_registrations.map((c) => <label key={c.key} className="flex items-center gap-2 rounded-lg border border-stone-200 p-2 text-sm">{["tournament", "phone"].includes(c.key) && <input type="hidden" name="columns" value={c.key}/>}<input type="checkbox" name="columns" value={c.key} defaultChecked={keys.includes(c.key)} disabled={["tournament", "phone"].includes(c.key)} />{c.label}</label>)}</div></div>
 
         <div className="flex flex-wrap gap-3">
           <a href={csvDownload} className="btn-secondary py-2">Download CSV</a>
           <a href={pdfDownload} className="btn-secondary py-2">Download PDF</a>
-          {showPdfPreview ? <a href={hidePdfPreviewUrl} className="btn-secondary py-2">Hide PDF Preview</a> : <a href={showPdfPreviewUrl} className="btn-secondary py-2">Show PDF Preview</a>}
+          <PdfPreview src={pdfPreview} />
         </div>
       </form>
 
       <section className="mt-6 grid gap-4 md:grid-cols-4"><div className="card p-4"><p className="text-xs font-bold uppercase text-stone-500">Total entries</p><p className="mt-2 text-2xl font-extrabold">{rows.length}</p></div><div className="card p-4"><p className="text-xs font-bold uppercase text-stone-500">Confirmed paid</p><p className="mt-2 text-2xl font-extrabold text-green-700">{paid}</p></div><div className="card p-4"><p className="text-xs font-bold uppercase text-stone-500">Pending payment</p><p className="mt-2 text-2xl font-extrabold text-amber-700">{pending}</p></div><div className="card p-4"><p className="text-xs font-bold uppercase text-stone-500">Payments received</p><p className="mt-2 text-2xl font-extrabold">{formatMoney(totalAmount)}</p></div></section>
 
-      <section className="card mt-6 overflow-hidden"><div className="border-b bg-white p-5"><h2 className="text-xl font-extrabold">Report Preview - Tournament Registrations</h2><p className="mt-1 text-sm text-stone-500">Generated {new Date().toLocaleString("en-NZ")}</p></div><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-stone-100 text-left"><tr>{cols.map((c) => <th key={c.key} className="p-3">{c.label}</th>)}<th className="p-3">Payment / Email</th></tr></thead><tbody>{rows.map((r: any) => <tr key={r.id} className="border-t">{cols.map((c) => <td key={c.key} className="p-3">{c.value(r)}</td>)}<td className="p-3"><RegistrationPaymentCheck id={r.id} /></td></tr>)}</tbody></table></div></section>
+      <section className="card mt-6 overflow-hidden"><div className="border-b bg-white p-5"><h2 className="text-xl font-extrabold">Report Preview - Tournament Registrations</h2><p className="mt-1 text-sm text-stone-500">Paid and balance reflect recorded full-payment status. Waived fees have no balance.</p></div><div className="overflow-x-auto"><table className="w-full min-w-[1500px] table-fixed text-sm"><thead className="bg-stone-100 text-left"><tr>{cols.map((c) => <th key={c.key} className="p-3">{c.label}</th>)}<th className="w-[160px] p-3">Actions</th></tr></thead><tbody>{rows.length === 0 && <tr><td colSpan={cols.length + 1} className="p-5 text-stone-600">No tournament registrations match these filters.</td></tr>}{rows.map((r: any) => <tr key={r.id} className="border-t">{cols.map((c) => <td key={c.key} className={`p-3 break-words align-top ${c.key === "balance" ? "text-red-600" : c.key === "registered" ? "text-orange-600" : ""}`}>{c.key === "player" ? <><span className="font-semibold text-green-700">{r.last_name}, {r.first_name}</span><br/><span className="text-stone-500">{r.membership_id || "Non-member"}</span></> : c.value(r)}</td>)}<td className="p-3"><RegistrationPaymentCheck id={r.id} /></td></tr>)}</tbody></table></div></section>
 
-      {showPdfPreview && <section className="card mt-6 overflow-hidden"><div className="border-b p-5"><h2 className="text-xl font-extrabold">Embedded PDF Preview</h2><p className="mt-1 text-sm text-stone-500">This PDF uses the same filters and selected columns above.</p></div><iframe src={pdfPreview} title="Tournament registrations PDF preview" className="h-[650px] w-full bg-white" /></section>}
+
     </div>
   );
 }
