@@ -1,6 +1,8 @@
 import PageShell from "@/components/PageShell";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
+export const dynamic = "force-dynamic";
+
 function LinkRow({ item }: { item: any }) {
   return <article className="card p-5"><h2 className="text-xl font-extrabold">{item.title}</h2><p className="mt-1 text-sm text-slate-600">{item.date_display || item.tournament_name || item.year}</p><div className="mt-4 flex flex-wrap gap-2">{item.vega_url && <a href={item.vega_url} target="_blank" rel="noreferrer" className="btn-secondary py-2">Vega page</a>}{item.lichess_url && <a href={item.lichess_url} target="_blank" rel="noreferrer" className="btn-secondary py-2">Lichess broadcast</a>}</div></article>;
 }

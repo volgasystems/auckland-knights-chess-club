@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
 import { canAccessTable } from "@/lib/roles";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -113,9 +114,15 @@ export async function POST(req: Request){
     return NextResponse.json({data});
   }
   if(action==='delete'){
-    const {error}=await s.from(table).delete().eq('id',id);
-    if(error) return NextResponse.json({error:error.message},{status:400});
-    return NextResponse.json({ok:true});
+    if (typeof id !== 'string' || !id.trim()) return NextResponse.json({error:'Select a record to delete.'},{status:400});
+    const {data,error}=await s.from(table).delete().eq('id',id).select('id');
+    if(error) return NextResponse.json({error:error.code === '23503' ? 'This record is referenced by another record. Remove that reference before deleting.' : error.message},{status:400});
+    if (!data?.length) return NextResponse.json({error:'No record was deleted. Refresh the page and try again.'},{status:404});
+    if (table === 'live_board_links') {
+      revalidatePath('/live-boards');
+      revalidatePath('/club-admin/live-boards');
+    }
+    return NextResponse.json({ok:true, deleted_id:id});
   }
   return NextResponse.json({error:'Invalid action'},{status:400});
 }
