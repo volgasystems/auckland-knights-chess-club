@@ -1,3 +1,4 @@
+import { validateEntryChanges } from "@/lib/tournamentEntryEditing";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
@@ -26,4 +27,19 @@ export async function DELETE(req: Request) {
     revalidatePath("/club-admin/tournament-registrations");
     return NextResponse.json({ok:true});
   } catch { return NextResponse.json({error:"Unable to delete. Check the registration and linked Stripe checkout, then try again."},{status:400}); }
+}
+
+export async function PATCH(req: Request) {
+ const admin=await getCurrentAdmin();
+ if(!admin||!canAccess(admin.profile.role,"tournament_registrations"))return NextResponse.json({error:"Not authorised"},{status:403});
+ try {
+  const {id,payload}=await req.json();
+  if(typeof id!=="string"||!id.trim())return NextResponse.json({error:"Select a registration."},{status:400});
+  let clean;try{clean=validateEntryChanges(payload);}catch(e:any){return NextResponse.json({error:e.message},{status:400});}
+  const s=createSupabaseServiceClient();
+  const {data,error}=await s.from("tournament_registrations").update({...clean,updated_at:new Date().toISOString()}).eq("id",id).select("id").single();
+  if(error||!data)return NextResponse.json({error:"Unable to update this registration. Refresh the report and try again."},{status:400});
+  revalidatePath("/club-admin/tournament-registrations");revalidatePath("/club-admin/tournament-registrations/players");revalidatePath("/tournaments","layout");
+  return NextResponse.json({ok:true});
+ }catch{return NextResponse.json({error:"Unable to save the registration. Please try again."},{status:400});}
 }
