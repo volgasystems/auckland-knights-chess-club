@@ -1,4 +1,5 @@
 "use client";
+import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 export default function RegistrationPaymentCheck({ id }: { id: string }) {
   const [loading, setLoading] = useState(false);
@@ -12,5 +13,5 @@ export default function RegistrationPaymentCheck({ id }: { id: string }) {
     } catch { setMessage("Unable to check payment. No new charge was made. Please try again."); }
     finally { setLoading(false); }
   }
-  return <div><button onClick={check} disabled={loading} className="btn-secondary whitespace-nowrap py-2 text-xs">{loading ? "Checking..." : "Check payment / retry email"}</button>{message && <p role="status" className="mt-2 max-w-xs text-xs font-semibold">{message} Refresh the report to see updated totals.</p>}</div>;
+  return <div><button type="button" onClick={check} disabled={loading} title="Check payment / retry confirmation email" aria-label="Check payment / retry confirmation email" className="inline-flex h-9 w-9 items-center justify-center bg-stone-600 text-white disabled:opacity-50"><RefreshCw size={16} className={loading ? "animate-spin" : ""}/></button>{message && <p role="status" className="mt-2 max-w-xs text-xs font-semibold">{message} Refresh the report to see updated totals.</p>}</div>;
 }
