@@ -41,7 +41,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "nzcf_rating", label: "NZCF Rating", value: (r) => r.nzcf_rating },
     { key: "fide_id", label: "FIDE ID", value: (r) => r.fide_id },
     { key: "fide_rating", label: "FIDE Rating", value: (r) => r.fide_rating },
-    { key: "payment_status", label: "Payment", value: (r) => memberStatusLabel(r.payment_status) },
+    { key: "payment_status", label: "Payment", value: (r) => ["paid", "manual_paid", "waived"].includes(r.payment_status) ? "Paid" : "Unpaid" },
     { key: "registration_status", label: "Status", value: (r) => memberStatusLabel(r.registration_status) },
     { key: "fee", label: "Fee", value: (r) => `$${(Number(r.entry_fee_cents || r.category_fee_cents || 0)/100).toFixed(2)}` },
     { key: "registered", label: "Date Registered", value: (r) => r.created_at ? new Date(r.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" },
@@ -72,7 +72,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
 
 export const DEFAULT_COLUMNS: Record<ReportType, string[]> = {
   members: ["name", "registered", "payable", "paid", "balance", "membership_id", "membership_status", "email"],
-  tournament_registrations: ["player", "tournament", "registered", "payable", "paid", "balance", "membership_id", "registration_status", "email", "phone"],
+  tournament_registrations: ["player", "tournament", "registered", "payment_status", "membership_id", "registration_status", "email", "phone"],
   absences: ["player", "tournament", "round", "round_date", "reason", "email", "phone", "status"],
   payments: ["type", "name", "email", "amount", "status", "date"]
 };
