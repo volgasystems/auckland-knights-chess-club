@@ -30,6 +30,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "registered", label: "Date Registered", value: (m) => m.created_at ? new Date(m.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" }
   ],
   tournament_registrations: [
+    { key: "dob", label: "DOB", value: (r) => r.date_of_birth ? String(r.date_of_birth).slice(0, 10) : "" },
     { key: "tournament", label: "Tournament Name", value: (r) => r.tournament_title || r.tournaments?.title },
     { key: "category", label: "Category", value: (r) => r.category_name || (r.is_member_registration ? "Membership Event" : "General") },
     { key: "membership_id", label: "Member ID", value: (r) => r.membership_id },
@@ -119,3 +120,5 @@ export function buildReportPageQuery(base: Record<string, any>, keys: string[], 
   const query = params.toString();
   return query ? `?${query}` : "?";
 }
+
+export const PLAYER_REPORT_COLUMNS = ["player", "tournament", "dob", "fide_id", "fide_rating", "nzcf_id", "nzcf_rating", "club_school", "category", "email", "phone", "payment_status", "registration_status"];
