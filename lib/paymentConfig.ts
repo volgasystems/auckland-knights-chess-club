@@ -12,5 +12,5 @@ export function paymentConfiguration(env: NodeJS.ProcessEnv = process.env) {
 }
 
 export function assertPaymentReady() {
-  if (!paymentConfiguration().available) throw new Error("Online payment is temporarily unavailable. Your entry has not been confirmed. Please contact info@aucklandknights.co.nz before trying again.");
+  if (!paymentConfiguration().available) throw new Error("Online payment is temporarily unavailable. Your entry has not been confirmed. Please contact akcc.nzchess@gmail.com before trying again.");
 }

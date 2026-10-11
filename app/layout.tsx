@@ -1,3 +1,4 @@
+import { CLUB_CONTACT_EMAIL, CLUB_CONTACT_PHONE } from "@/lib/clubContact";
 import type { Metadata } from "next";
 import "./globals.css";
 import { SITE_URL, CLUB_NAME } from "@/lib/seo";
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-NZ">
-      <body><StructuredData data={{ "@context": "https://schema.org", "@graph": [{ "@type": "SportsOrganization", "@id": `${SITE_URL}/#club`, name: CLUB_NAME, url: SITE_URL, logo: `${SITE_URL}/logo.png`, sport: "Chess", areaServed: ["East Auckland", "South Auckland"], description: "A community chess club welcoming children, beginners and adults across East Auckland and South Auckland." }, { "@type": "WebSite", "@id": `${SITE_URL}/#website`, name: CLUB_NAME, url: SITE_URL, inLanguage: "en-NZ", publisher: { "@id": `${SITE_URL}/#club` } }] }} /><PWARegister />{children}</body>
+      <body><StructuredData data={{ "@context": "https://schema.org", "@graph": [{ "@type": "SportsOrganization", "@id": `${SITE_URL}/#club`, name: CLUB_NAME, url: SITE_URL, logo: `${SITE_URL}/logo.png`, sport: "Chess", email: CLUB_CONTACT_EMAIL, telephone: CLUB_CONTACT_PHONE, areaServed: ["East Auckland", "South Auckland"], description: "A community chess club welcoming children, beginners and adults across East Auckland and South Auckland." }, { "@type": "WebSite", "@id": `${SITE_URL}/#website`, name: CLUB_NAME, url: SITE_URL, inLanguage: "en-NZ", publisher: { "@id": `${SITE_URL}/#club` } }] }} /><PWARegister />{children}</body>
     </html>
   );
 }

@@ -1,3 +1,4 @@
+import { clubContactEmail } from "@/lib/clubContact";
 import { NextResponse } from "next/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { sendEmail } from "@/lib/email";
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
 
     try {
       const { data: settings } = await service.from("club_settings").select("general_email").eq("id", "default").maybeSingle();
-      const to = settings?.general_email || process.env.CLUB_FROM_EMAIL;
+      const to = clubContactEmail(settings);
       if (to) await sendEmail({
         to,
         subject: `Website enquiry: ${payload.subject}`,

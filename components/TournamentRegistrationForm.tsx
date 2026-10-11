@@ -107,7 +107,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
       const json = await res.json();
-      if (!res.ok) { setMessage(json.error || "Your registration is not confirmed. If payment was taken, do not pay again; contact info@aucklandknights.co.nz."); return; }
+      if (!res.ok) { setMessage(json.error || "Your registration is not confirmed. If payment was taken, do not pay again; contact akcc.nzchess@gmail.com."); return; }
       if (json.url) {
         setPaymentUrl(json.url);
         setMessage(`Entry reference: ${json.registration_id}. Your entry is pending payment. Redirecting to secure checkout...`);
@@ -118,7 +118,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
       setConfirmed(true);
       setMessage(`${json.message || "Registration confirmed."}${json.registration_id ? ` Entry reference: ${json.registration_id}.` : ""}`);
     } catch {
-      setMessage("The connection was interrupted and we could not verify whether your entry was saved. Do not submit or pay again if payment was taken. Contact info@aucklandknights.co.nz so we can check your entry.");
+      setMessage("The connection was interrupted and we could not verify whether your entry was saved. Do not submit or pay again if payment was taken. Contact akcc.nzchess@gmail.com so we can check your entry.");
     } finally { setLoading(false); }
 
   }
@@ -138,7 +138,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
           If you close or cancel the payment page, your entry will remain as <b>Pending Payment</b> and will not appear in the public entries list.
         </div>
       )}
-      {fee > 0 && !paymentAvailable && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-4 text-red-800">Online payment is temporarily unavailable. Contact info@aucklandknights.co.nz to arrange registration.</p>}
+      {fee > 0 && !paymentAvailable && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-4 text-red-800">Online payment is temporarily unavailable. Contact akcc.nzchess@gmail.com to arrange registration.</p>}
       {paymentMode === "test" && <p className="mt-3 font-bold text-amber-800">Test checkout: this does not take a real payment or confirm a live paid entry.</p>}
       <p className="mt-3 text-sm text-slate-600">Current fee: <b>{fee > 0 ? formatMoney(fee) : "Not configured — contact the club"}</b>.</p>
 

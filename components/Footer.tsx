@@ -1,3 +1,4 @@
+import { clubContactEmail, CLUB_CONTACT_PHONE, CLUB_CONTACT_PHONE_LINK } from "@/lib/clubContact";
 import Link from "next/link";
 import Image from "next/image";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -79,7 +80,7 @@ export default async function Footer() {
           <h3 className="font-bold text-white">Contact Us</h3>
           <div className="mt-3 space-y-2 text-sm text-stone-300">
             <p>{settings?.club_address || "East Auckland / South Auckland, New Zealand"}</p>
-            <p>{settings?.general_email || "info@aucklandknights.co.nz"}</p>
+            <p><a href={`mailto:${clubContactEmail(settings)}`}>{clubContactEmail(settings)}</a></p><p><a href={CLUB_CONTACT_PHONE_LINK}>{CLUB_CONTACT_PHONE}</a></p>
             {(settings?.senior_club_captain_name || settings?.club_captain_name) && <p>Senior Club Captain: {settings?.senior_club_captain_name || settings?.club_captain_name}</p>}
             {settings?.junior_club_captain_name && <p>Junior Club Captain: {settings.junior_club_captain_name}</p>}
           </div>

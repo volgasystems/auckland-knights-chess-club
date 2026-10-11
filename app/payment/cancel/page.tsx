@@ -10,7 +10,7 @@ export default async function PaymentCancel({ searchParams }: { searchParams: Pr
         <div className="card mx-auto max-w-2xl p-8 text-center">
           <h1 className="text-3xl font-extrabold text-red-700">Payment Not Completed</h1>
           <p className="mt-3 text-slate-600">
-            You left the payment page. Your entry is not confirmed unless Stripe has verified payment. If your bank shows a payment, do not pay again. Contact info@aucklandknights.co.nz with your entry reference or receipt so we can check it.
+            You left the payment page. Your entry is not confirmed unless Stripe has verified payment. If your bank shows a payment, do not pay again. Contact akcc.nzchess@gmail.com with your entry reference or receipt so we can check it.
           </p>
           {reference && <p className="mt-4 break-all text-sm"><b>Entry reference:</b> {reference}</p>}
           <div className="mt-6 flex flex-wrap justify-center gap-3">

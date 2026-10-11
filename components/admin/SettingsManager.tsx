@@ -1,4 +1,5 @@
 "use client";
+import { clubContactEmail } from "@/lib/clubContact";
 import MembershipNumbering from "@/components/admin/MembershipNumbering";
 import { useState } from "react";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
@@ -18,7 +19,7 @@ export default function SettingsManager({ initial }: { initial: Settings | null 
     id: "default",
     club_name: "Auckland Knights Chess Club",
     club_address: "East Auckland / South Auckland, New Zealand",
-    general_email: "info@aucklandknights.co.nz",
+
     status: "draft",
     is_published: false,
     membership_id_prefix: "AKCC",
@@ -28,6 +29,7 @@ export default function SettingsManager({ initial }: { initial: Settings | null 
     smtp_secure: false,
     club_from_name: "Auckland Knights Chess Club",
     ...initial,
+    general_email: clubContactEmail(initial),
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
