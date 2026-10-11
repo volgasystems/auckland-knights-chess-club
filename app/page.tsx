@@ -1,3 +1,5 @@
+import { pageMetadata } from "@/lib/seo";
+export const metadata = pageMetadata("Chess for East & South Auckland", "Auckland Knights Chess Club welcomes children, beginners and adults. Find chess tournaments, coaching, membership and community events in Auckland.", "/");
 // Tournament data is managed in admin and must be read on every request.
 export const dynamic = "force-dynamic";
 
