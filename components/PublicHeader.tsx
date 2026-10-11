@@ -1,3 +1,4 @@
+import { clubContactEmail, CLUB_CONTACT_PHONE, CLUB_CONTACT_PHONE_LINK } from "@/lib/clubContact";
 import Link from "next/link";
 import Image from "next/image";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -41,7 +42,7 @@ export default async function PublicHeader() {
     <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="bg-black text-white">
         <div className="container-page flex h-8 items-center justify-between gap-4 text-xs sm:text-sm">
-          <span className="flex min-w-0 items-center gap-2 truncate"><Mail className="h-3.5 w-3.5 text-akcc-gold" />{settings?.general_email || "info@aucklandknights.co.nz"}</span>
+          <span className="flex min-w-0 items-center gap-2 truncate"><Mail className="h-3.5 w-3.5 text-akcc-gold" />{clubContactEmail(settings)}</span>
           <span className="hidden items-center gap-2 whitespace-nowrap md:flex"><MapPin className="h-3.5 w-3.5 text-akcc-gold" />East Auckland & South Auckland</span>
           {socialLinks.length > 0 && (
             <div className="hidden items-center gap-3 lg:flex">

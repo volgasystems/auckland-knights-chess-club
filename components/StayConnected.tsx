@@ -1,3 +1,4 @@
+import { clubContactEmail, CLUB_CONTACT_PHONE, CLUB_CONTACT_PHONE_LINK } from "@/lib/clubContact";
 import { Mail, Phone } from "lucide-react";
 
 function Icon({ label }: { label: string }) {
@@ -12,8 +13,8 @@ function Icon({ label }: { label: string }) {
 }
 
 export default function StayConnected({ settings }: { settings: any }) {
-  const phone = settings?.senior_club_captain_phone || settings?.club_captain_phone || settings?.general_phone;
-  const email = settings?.general_email || "info@aucklandknights.co.nz";
+  const phone = CLUB_CONTACT_PHONE;
+  const email = clubContactEmail(settings);
   const links = [
     ["Phone", phone ? `tel:${String(phone).replace(/\s+/g, "")}` : ""],
     ["Instagram", settings?.instagram_url],

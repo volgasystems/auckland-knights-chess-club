@@ -123,7 +123,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (e: any) {
     console.error("Tournament registration failed", { registration_id: savedRegistrationId || null, error_code: e?.code || "registration_error" });
     return NextResponse.json({ error: savedRegistrationId
-      ? `Your entry reference is ${savedRegistrationId}, but registration could not be completed. Do not pay again if a payment was taken. Contact info@aucklandknights.co.nz with this reference.`
-      : "We could not complete your registration. Your entry is not confirmed. If payment was taken, do not pay again; contact info@aucklandknights.co.nz.", registration_id: savedRegistrationId || undefined }, { status: 503 });
+      ? `Your entry reference is ${savedRegistrationId}, but registration could not be completed. Do not pay again if a payment was taken. Contact akcc.nzchess@gmail.com with this reference.`
+      : "We could not complete your registration. Your entry is not confirmed. If payment was taken, do not pay again; contact akcc.nzchess@gmail.com.", registration_id: savedRegistrationId || undefined }, { status: 503 });
   }
 }

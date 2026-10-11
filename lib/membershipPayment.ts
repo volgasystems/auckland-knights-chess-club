@@ -38,7 +38,7 @@ export async function sendMembershipConfirmation(s: any, member: any, deliveryId
     const values: any = { ...member, full_name: `${member.first_name} ${member.last_name}`, club_name: "Auckland Knights Chess Club" };
     const render = (v: string) => renderEmailTemplate(v, values);
     const subject = template?.subject ? render(template.subject) : "Auckland Knights membership confirmed";
-    const text = template?.body ? render(template.body) : `Hello ${member.first_name},\n\nYour Auckland Knights Chess Club membership status is ${member.membership_status}.\nMembership ID: ${member.membership_id}\nValid from: ${member.membership_start_date}\nValid until: ${member.membership_end_date}\n\nUse your membership ID or registered email for club events.\nFor help, contact info@aucklandknights.co.nz.\n\nAuckland Knights Chess Club`;
+    const text = template?.body ? render(template.body) : `Hello ${member.first_name},\n\nYour Auckland Knights Chess Club membership status is ${member.membership_status}.\nMembership ID: ${member.membership_id}\nValid from: ${member.membership_start_date}\nValid until: ${member.membership_end_date}\n\nUse your membership ID or registered email for club events.\nFor help, contact akcc.nzchess@gmail.com.\n\nAuckland Knights Chess Club`;
     await sendEmail({ to: member.email, subject, text, html: emailTextHtml(text) });
     checked(await s.from("email_delivery_logs").update({ status: "sent", sent_at: new Date().toISOString(), error_message: null }).eq("id", deliveryId));
     return "sent";

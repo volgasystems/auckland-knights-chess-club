@@ -29,7 +29,7 @@ export default function JoinMembershipForm({ optionsFromDb = [] }: { optionsFrom
       const json = await res.json();
       if (!res.ok || !json.url) { setMessage(json.error || "Membership could not be registered. Contact the club before paying again."); return; }
       setPaymentUrl(json.url); setMessage(`Reference: ${json.membership_id}. Your membership is pending until payment is verified. Redirecting to checkout...`); window.location.href = json.url;
-    } catch { setMessage("The connection was interrupted. If payment was taken, do not submit or pay again. Contact info@aucklandknights.co.nz so we can check your membership."); }
+    } catch { setMessage("The connection was interrupted. If payment was taken, do not submit or pay again. Contact akcc.nzchess@gmail.com so we can check your membership."); }
     finally { setLoading(false); }
   }
   const fields = [["first_name", "First Name *"],["last_name", "Last Name *"],["nzcf_id", "NZCF Registration Number, if known"],["nzcf_rating", "NZCF Rating, if known"],["fide_id", "FIDE Registration Number, if known"],["fide_rating", "FIDE Rating, if known"],["date_of_birth", "Date of Birth *"],["gender", "Gender *"],["email", "Email *"],["phone", "Phone / Mobile *"],["parent_guardian_phone", "If child, parent/legal guardian mobile"],["school", "School attended"],["parent_guardian_first_name", "Parent/Guardian First Name"],["parent_guardian_last_name", "Parent/Guardian Last Name"],["date_payment_made", "Date Registration Payment Made"]];
