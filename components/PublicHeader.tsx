@@ -67,7 +67,7 @@ export default async function PublicHeader() {
             <Link key={href} href={href} className="whitespace-nowrap text-[15px] font-extrabold text-stone-700 hover:text-black xl:text-base">{label}</Link>
           ))}
         </nav>
-        <Link href="/join" className="btn-gold hidden shrink-0 sm:inline-flex">Join Now</Link>
+        <Link href="/join" className="btn-gold hidden shrink-0 sm:inline-flex">Join the Club</Link>
         <MobilePublicNav links={mainLinks} />
       </div>
     </header>

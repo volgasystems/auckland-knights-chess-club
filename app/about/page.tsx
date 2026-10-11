@@ -36,7 +36,7 @@ export default function AboutPage() {
                 The club has been inspired by CM Sai Vivan Karthikeya Somaraju, one of New Zealand’s talented young chess players, who wanted to create a friendly place where children and adults can learn, practise, improve, and enjoy chess together.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link href="/join" className="btn-gold">Join Now</Link>
+                <Link href="/join" className="btn-gold">Join the Club</Link>
                 <Link href="/tournaments" className="rounded-md border border-white/30 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10">View Tournaments</Link>
               </div>
             </div>
@@ -114,7 +114,7 @@ export default function AboutPage() {
               Whether you are a parent looking for chess opportunities for your child, a beginner wanting to learn, or an adult who enjoys the game, Auckland Knights Chess Club is here to welcome you.
             </p>
             <p className="mt-5 text-2xl font-extrabold text-akcc-blue">Learn. Play. Improve. Compete. Become a Knight.</p>
-            <Link href="/join" className="btn-primary mt-6">Join Now</Link>
+            <Link href="/join" className="btn-primary mt-6">Join the Club</Link>
           </article>
         </section>
       </main>
