@@ -134,7 +134,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
         </div>
       ) : (
         <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <b>Payment required:</b> your tournament entry is <b>not confirmed</b> until Stripe payment is successfully completed.
+          <b>Public tournament:</b> open to all players. Everyone pays the tournament entry fee, including club members. Your entry is <b>not confirmed</b> until Stripe payment is successfully completed.
           If you close or cancel the payment page, your entry will remain as <b>Pending Payment</b> and will not appear in the public entries list.
         </div>
       )}
@@ -142,7 +142,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
       {paymentMode === "test" && <p className="mt-3 font-bold text-amber-800">Test checkout: this does not take a real payment or confirm a live paid entry.</p>}
       <p className="mt-3 text-sm text-slate-600">Current fee: <b>{fee > 0 ? formatMoney(fee) : "Not configured — contact the club"}</b>.</p>
 
-      <p className="mt-4 text-sm"><a href="/join" className="font-bold underline">Join or renew Auckland Knights membership</a></p>
+      {isClubCalendar && <p className="mt-4 text-sm"><a href="/join" className="font-bold underline">Join or renew Auckland Knights membership</a></p>}
       {isClubCalendar && (
         <div className="mt-5 rounded-xl bg-green-50 p-4">
           <label>
