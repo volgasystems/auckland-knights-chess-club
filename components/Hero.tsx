@@ -35,8 +35,8 @@ export default function Hero() {
             Building strong minds and great friendships through the game of chess.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link href="/join" className="btn-gold gap-2">
-              <UserRound className="h-4 w-4" /> Join the Club
+            <Link href="/about" className="btn-gold gap-2">
+              <UserRound className="h-4 w-4" /> About the Club
             </Link>
             <Link
               href="/tournaments"
