@@ -29,7 +29,7 @@ export default async function HomePage() {
     <Hero />
     <FeatureStrip />
     <main className="container-page py-10">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-stone-100 p-5"><p className="font-bold">Join the club, find your member record or renew membership.</p><Link href="/join#membership-search" className="btn-primary">Join Now / Find Member</Link></div>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-stone-100 p-5"><p className="font-bold">Join the club, find your member record or renew membership.</p><Link href="/join" className="btn-primary">Join the Club</Link></div>
       <div className="grid gap-8 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between gap-4">

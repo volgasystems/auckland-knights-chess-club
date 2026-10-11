@@ -23,7 +23,7 @@ export default function MobilePublicNav({ links }: { links: [string, string][] }
                 {label}
               </Link>
             ))}
-            <Link href="/join" onClick={() => setOpen(false)} className="btn-gold mt-2 w-full">Join Now</Link>
+            <Link href="/join" onClick={() => setOpen(false)} className="btn-gold mt-2 w-full">Join the Club</Link>
           </div>
         </div>
       )}
