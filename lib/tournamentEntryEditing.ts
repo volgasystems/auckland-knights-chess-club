@@ -3,6 +3,7 @@ export const ENTRY_FIELDS = [
  {key:"first_name",label:"First name",required:true}, {key:"last_name",label:"Last name",required:true},
  {key:"email",label:"Email",type:"email",required:true}, {key:"phone",label:"Phone",required:true},
  {key:"date_of_birth",label:"Date of birth",type:"date",required:true},
+ {key:"gender",label:"Gender"},
  {key:"fide_id",label:"FIDE ID"},{key:"fide_rating",label:"FIDE rating",type:"number"},
  {key:"nzcf_id",label:"NZCF ID"},{key:"nzcf_rating",label:"NZCF rating",type:"number"},
  {key:"club_name",label:"Club"},{key:"school_name",label:"School"},
@@ -21,5 +22,6 @@ export function validateEntryChanges(payload: unknown) {
  }
  if(!validDateOfBirth(clean.date_of_birth))throw new Error("Enter a valid date of birth that is not in the future.");
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(clean.email)))throw new Error("Enter a valid email address.");
+ if(clean.gender && !["Male","Female","Non-binary","Prefer not to say","Other"].includes(String(clean.gender)))throw new Error("Select a valid gender.");
  clean.email=String(clean.email).toLowerCase();return clean;
 }

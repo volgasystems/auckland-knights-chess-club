@@ -16,6 +16,7 @@ type MemberLookup = {
   email?: string;
   phone?: string;
   date_of_birth?: string;
+  gender?: string;
   nzcf_id?: string;
   nzcf_rating?: number;
   fide_id?: string;
@@ -205,6 +206,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
           ["email", "Email *", member?.email || ""],
           ["phone", "Phone *", member?.phone || ""],
           ["date_of_birth", "Date of birth *", member?.date_of_birth ? String(member.date_of_birth).slice(0, 10) : ""],
+          ["gender", "Gender *", member?.gender || ""],
           ["nzcf_id", "NZCF ID", member?.nzcf_id || ""],
           ["nzcf_rating", "NZCF rating", member?.nzcf_rating || ""],
           ["fide_id", "FIDE ID", member?.fide_id || ""],
@@ -216,13 +218,13 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
         ].map(([name, label, defaultValue]) => (
           <label key={name}>
             <span className="label">{label}</span>
-            <input
+            {name === "gender" ? <select name="gender" defaultValue={String(defaultValue || "")} required className="input mt-1"><option value="">Select gender</option>{["Male", "Female", "Non-binary", "Prefer not to say", "Other"].map(g => <option key={g} value={g}>{g}</option>)}</select> : <input
               name={String(name)}
               defaultValue={String(defaultValue || "")}
               type={name === "email" ? "email" : String(name).includes("date") ? "date" : "text"}
               required={String(label).includes("*")}
               className="input mt-1"
-            />
+            />}
           </label>
         ))}
         <AddressAutocomplete onSelect={(v) => setAddress({ street_address: v.street_address, suburb: v.suburb, city: v.city, postcode: v.postcode })} />

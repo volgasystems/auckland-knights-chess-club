@@ -33,6 +33,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     body.email = body.email.toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) return NextResponse.json({ error: "Enter a valid email address for confirmation." }, { status: 400 });
     if (!body.consent) return NextResponse.json({ error: "Please confirm your registration details and communication consent." }, { status: 400 });
+    if (!["Male", "Female", "Non-binary", "Prefer not to say", "Other"].includes(body.gender)) return NextResponse.json({ error: "Please select a valid gender." }, { status: 400 });
     const s = createSupabaseServiceClient();
 
     const { data: tournament, error: tournamentError } = await s.from("tournaments").select("*").eq("id", id).maybeSingle();
@@ -79,6 +80,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       email: body.email,
       phone: body.phone,
       date_of_birth: body.date_of_birth,
+      gender: body.gender,
       nzcf_id: body.nzcf_id,
       nzcf_rating: body.nzcf_rating ? Number(body.nzcf_rating) : null,
       fide_id: body.fide_id,
