@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const s = createSupabaseServiceClient();
     let query = s
       .from("club_memberships")
-      .select("id,membership_id,first_name,last_name,email,phone,date_of_birth,nzcf_id,nzcf_rating,fide_id,fide_rating,school,parent_guardian_phone,parent_guardian_first_name,parent_guardian_last_name,street_address,suburb,city,postcode,membership_status,payment_status,membership_start_date,membership_end_date");
+      .select("id,membership_id,first_name,last_name,email,phone,date_of_birth,gender,nzcf_id,nzcf_rating,fide_id,fide_rating,school,parent_guardian_phone,parent_guardian_first_name,parent_guardian_last_name,street_address,suburb,city,postcode,membership_status,payment_status,membership_start_date,membership_end_date");
 
     if (membershipId) query = query.eq("membership_id", membershipId);
     else query = query.ilike("email", memberEmail.replace(/[\\%_]/g, "\\$&"));
