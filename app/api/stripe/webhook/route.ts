@@ -1,3 +1,4 @@
+import { applyTournamentRefund } from "@/lib/tournamentRefund";
 import { confirmMembershipRenewal } from "@/lib/membershipRenewal";
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
@@ -17,6 +18,10 @@ export async function POST(req: Request) {
   try {
     const s = createSupabaseServiceClient();
     const session = event.data.object as any;
+    if (event.type === "charge.refunded") {
+      await applyTournamentRefund(s, session);
+      return NextResponse.json({ received: true });
+    }
     const type = session.metadata?.type;
     const successful = ["checkout.session.completed", "checkout.session.async_payment_succeeded"].includes(event.type);
     if (successful && session.payment_status === "paid") {
