@@ -1,3 +1,4 @@
+import { reconcileTournamentRefund } from "@/lib/tournamentRefund";
 import { NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/auth";
 import { canAccess } from "@/lib/roles";
@@ -21,6 +22,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No checkout session is linked. Check Stripe manually before confirming payment. Do not collect payment again without checking." }, { status: 400 });
     }
     const session = await getStripe().checkout.sessions.retrieve(entry.stripe_checkout_session_id);
+    const refund = await reconcileTournamentRefund(s, session, entry);
+    if (refund) return NextResponse.json(refund);
     if (session.payment_status !== "paid" || session.status !== "complete") return NextResponse.json({ status: "not_paid", message: "Stripe has not confirmed payment. The entry remains unconfirmed." });
     return NextResponse.json(await confirmTournamentPayment(s, session));
   } catch (e: any) {
