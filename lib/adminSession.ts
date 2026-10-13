@@ -15,7 +15,7 @@ export function validAdminSession(token: string | undefined, userId: string, now
   if (!token) return null;
   const [id, expiry, supplied, ...rest] = token.split(":");
   const expiresAt = Number(expiry);
-  if (rest.length || id !== userId || !Number.isSafeInteger(expiresAt) || expiresAt <= now || expiresAt > now + ADMIN_SESSION_SECONDS * 1000 || !/^[a-f0-9]{64}$/.test(supplied || "")) return null;
+  if (rest.length || id !== userId || !Number.isSafeInteger(expiresAt) || expiresAt <= now || expiresAt > now + ADMIN_SESSION_SECONDS * 1000 + 30000 || !/^[a-f0-9]{64}$/.test(supplied || "")) return null;
   const expected = signature(`${id}:${expiry}`);
   return timingSafeEqual(Buffer.from(supplied), Buffer.from(expected)) ? expiresAt : null;
 }
