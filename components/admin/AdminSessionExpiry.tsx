@@ -1,10 +1,11 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 export default function AdminSessionExpiry({ remainingMs }: { remainingMs: number }) {
+  const lastRenewedAt = useRef<number | null>(null);
   useEffect(() => {
     const originalFetch = window.fetch.bind(window);
     let stopped = false, busy = false, timer: number;
-    let lastRenewed = performance.now();
+    if (lastRenewedAt.current === null) lastRenewedAt.current = performance.now();
     const expire = () => { if (!stopped) window.location.replace("/club-admin/login?expired=1"); };
     const schedule = (ms: number) => { window.clearTimeout(timer); timer = window.setTimeout(() => void check(false), Math.max(100, ms)); };
     async function check(renew: boolean) {
@@ -16,12 +17,12 @@ export default function AdminSessionExpiry({ remainingMs }: { remainingMs: numbe
         if (res.ok) {
           const data = await res.json();
           if (typeof data.remainingMs === "number") schedule(data.remainingMs);
-          if (renew) lastRenewed = performance.now();
+          if (renew) lastRenewedAt.current = performance.now();
         } else schedule(15000);
       } catch { schedule(15000); }
       finally { busy = false; }
     }
-    const activity = () => { if (performance.now() - lastRenewed >= 60000) void check(true); };
+    const activity = () => { if (performance.now() - (lastRenewedAt.current ?? 0) >= 60000) void check(true); };
     const focus = () => { if (document.visibilityState === "visible") void check(false); };
     // A full navigation after login and expiry avoids stale protected router state.
     // Server-provided durations also avoid logging out due to a wrong device clock.
