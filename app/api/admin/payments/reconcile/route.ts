@@ -13,6 +13,14 @@ export async function POST(req: Request) {
     const s = createSupabaseServiceClient();
     const { data: entry, error } = await s.from("tournament_registrations").select("*").eq("id", registration_id).single();
     if (error || !entry) throw new Error("Registration not found.");
+    if (entry.payment_status === "paid" && entry.registration_status === "confirmed") {
+      const { data: receipt } = await s.from("payment_records").select("payment_method,status").eq("id", entry.id).maybeSingle();
+      if (receipt?.status === "paid" && ["cash", "bank_transfer", "verified_other"].includes(receipt?.payment_method)) {
+        const { data: tournament, error } = await s.from("tournaments").select("*").eq("id", entry.tournament_id).single();
+        if (error) throw error;
+        return NextResponse.json({ status: "confirmed", email_status: await tryTournamentConfirmation(s, entry, tournament), message: "Manual payment recorded. Entry confirmed." });
+      }
+    }
     if (!entry.stripe_checkout_session_id) {
       if (entry.payment_status === "paid" && entry.registration_status === "confirmed" && Number(entry.entry_fee_cents) === 0) {
         const { data: tournament, error } = await s.from("tournaments").select("*").eq("id", entry.tournament_id).single();

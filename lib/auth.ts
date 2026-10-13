@@ -6,11 +6,16 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { AdminArea, canAccess } from "@/lib/roles";
 
 export async function getCurrentAdmin() {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const expiresAt = validAdminSession((await cookies()).get(ADMIN_SESSION_COOKIE)?.value, user.id);
+  // Reject an expired cookie before attempting a remote token refresh.
+  const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value;
+  let expiresAt: number | null;
+  try { expiresAt = validAdminSession(token, token?.split(":")[0] || ""); }
+  catch { return null; }
   if (!expiresAt) return null;
+  const supabase = await createSupabaseServerClient();
+  const result = await supabase.auth.getUser().catch(() => null);
+  const user = result?.data?.user;
+  if (!user || !validAdminSession(token, user.id)) return null;
   const service = createSupabaseServiceClient();
   const { data: profile } = await service
     .from("profiles")
