@@ -25,7 +25,7 @@ export default async function TournamentsPage() {
   }
   const years = Array.from(byYear.keys()).sort((a,b)=>b-a);
 
-  return <PageShell><main className="container-page py-12">
+  return <PageShell><main className="container-page py-12"><p className="mt-3 text-sm font-semibold text-stone-700">All participants must be members of the New Zealand Chess Federation (NZCF).</p>
     <div className="mx-auto max-w-5xl rounded-2xl bg-white p-8 shadow-soft">
       <h1 className="text-4xl font-extrabold">Tournaments</h1>
       <p className="mt-4 max-w-3xl text-lg leading-8 text-stone-700">Upcoming and current club tournaments and general/open events. Completed tournaments are moved to the Results page.</p>
