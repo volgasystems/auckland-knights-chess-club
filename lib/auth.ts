@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+import { ADMIN_SESSION_COOKIE, validAdminSession } from "@/lib/adminSession";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -7,6 +9,8 @@ export async function getCurrentAdmin() {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+  const expiresAt = validAdminSession((await cookies()).get(ADMIN_SESSION_COOKIE)?.value, user.id);
+  if (!expiresAt) return null;
   const service = createSupabaseServiceClient();
   const { data: profile } = await service
     .from("profiles")
@@ -14,7 +18,7 @@ export async function getCurrentAdmin() {
     .eq("id", user.id)
     .maybeSingle();
   if (!profile || !profile.is_active) return null;
-  return { user, profile };
+  return { user, profile, expiresAt };
 }
 
 export async function requireAdmin(area: AdminArea = "dashboard") {

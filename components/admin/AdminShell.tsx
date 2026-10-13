@@ -1,10 +1,11 @@
+import AdminSessionExpiry from "./AdminSessionExpiry";
 import Link from "next/link";
 import Image from "next/image";
 import AdminNav from "@/components/admin/AdminNav";
 import { displayName } from "@/lib/auth";
 export default function AdminShell({ admin, children }: { admin: any; children: React.ReactNode }) {
   return <div className="min-h-screen bg-stone-100">
-    <header className="sticky top-0 z-30 bg-black text-white shadow-sm">
+    <AdminSessionExpiry expiresAt={admin.expiresAt}/><header className="sticky top-0 z-30 bg-black text-white shadow-sm">
       <div className="flex items-center justify-between px-5 py-3">
         <Link href="/club-admin/dashboard" className="flex items-center gap-3">
           <Image src="/logo.png" alt="AKCC" width={64} height={64} className="h-14 w-14 rounded-full object-contain"/>
