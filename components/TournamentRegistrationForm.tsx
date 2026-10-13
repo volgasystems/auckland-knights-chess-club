@@ -129,6 +129,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
   return (
     <form onSubmit={submit} className="card p-6">
       <h2 className="text-2xl font-extrabold">{isClubCalendar ? "Enrol for" : "Register for"} {tournament.title}</h2>
+      <p className="mt-3 text-sm font-semibold text-stone-700">All participants must be members of the New Zealand Chess Federation (NZCF).</p>
       {isClubCalendar ? (
         <div className="mt-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-900">
           <b>Club Calendar Event:</b> active Auckland Knights membership is mandatory. Enter your Membership ID or registered email, click <b>Find Member</b>, then register and pay the tournament entry fee. Membership does not cover tournament fees.
