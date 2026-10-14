@@ -34,7 +34,7 @@ export default async function HomePage() {
         <section className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-extrabold uppercase tracking-wide">Upcoming Public Tournaments</h2>
+              <h2 className="text-2xl font-extrabold uppercase tracking-wide">Upcoming Tournaments</h2>
               <p className="mt-1 text-sm text-stone-600">General/open tournaments and paid public events. Club calendar events are listed under Calendar and Tournaments.</p>
             </div>
             <Link href="/tournaments" className="shrink-0 text-sm font-bold text-black">View All</Link>
