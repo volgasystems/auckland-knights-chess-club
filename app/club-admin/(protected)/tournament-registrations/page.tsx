@@ -1,3 +1,4 @@
+import PaymentReminders from "@/components/admin/PaymentReminders";
 import { editableEntry } from "@/lib/tournamentEntryEditing";
 import PdfPreview from "@/components/admin/PdfPreview";
 import PaymentDiagnostics from "@/components/admin/PaymentDiagnostics";
@@ -33,6 +34,7 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
   const paid = rows.filter((r: any) => r.payment_status === "paid" && r.registration_status === "confirmed").length;
   const pending = rows.filter((r: any) => r.payment_status === "pending_payment").length;
   const totalAmount = rows.filter((r: any) => r.payment_status === "paid").reduce((sum: number, r: any) => sum + Number(r.entry_fee_cents || r.category_fee_cents || 0), 0);
+  const reminderSchema = await s.from("tournament_registrations").select("payment_reminder_sent_at,payment_reminder_claimed_at,payment_pending_reason").limit(1);
   const base = formBase(sp);
   const pdfPreview = buildReportQuery(base, "tournament_registrations", keys, "pdf", true);
   const pdfDownload = buildReportQuery(base, "tournament_registrations", keys, "pdf");
@@ -46,10 +48,11 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
       <p className="mt-2 text-stone-600">Choose filters and columns before exporting. Public entries show only paid and confirmed players.</p>
 
       <PaymentDiagnostics />
+      <PaymentReminders ready={!reminderSchema.error} scheduled={!!process.env.CRON_SECRET && process.env.CRON_SECRET.length >= 32} tournamentId={sp.tournament_id} canSend={["admin","super_admin"].includes(admin.profile.role)} />
       <form className="card mt-5 space-y-5 p-5">
         <div className="grid gap-3 md:grid-cols-4">
           <select name="tournament_id" defaultValue={sp.tournament_id || ""} className="admin-input"><option value="">All tournaments</option>{(tournaments || []).map((t: any) => <option key={t.id} value={t.id}>{t.title}</option>)}</select>
-          <select name="payment_status" defaultValue={sp.payment_status || ""} className="admin-input"><option value="">All payment statuses</option><option value="paid">Paid</option><option value="pending_payment">Pending</option><option value="failed">Failed</option></select>
+          <select name="payment_status" defaultValue={sp.payment_status || ""} className="admin-input"><option value="">All payment statuses</option><option value="paid">Paid</option><option value="pending_payment">Pending</option><option value="failed">Failed</option><option value="expired">Expired</option></select>
           <select name="sort" defaultValue={sort} className="admin-input"><option value="created_at_desc">Newest</option><option value="nzcf_desc">NZCF high-low</option><option value="fide_desc">FIDE high-low</option></select>
           <button className="btn-primary py-2">Preview Report</button>
         </div>

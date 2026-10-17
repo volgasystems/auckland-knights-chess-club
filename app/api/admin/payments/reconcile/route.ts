@@ -1,3 +1,4 @@
+import { stripePaymentReason } from "@/lib/tournamentPaymentReminder";
 import { reconcileTournamentRefund } from "@/lib/tournamentRefund";
 import { NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/auth";
@@ -32,7 +33,11 @@ export async function POST(req: Request) {
     const session = await getStripe().checkout.sessions.retrieve(entry.stripe_checkout_session_id);
     const refund = await reconcileTournamentRefund(s, session, entry);
     if (refund) return NextResponse.json(refund);
-    if (session.payment_status !== "paid" || session.status !== "complete") return NextResponse.json({ status: "not_paid", message: "Stripe has not confirmed payment. The entry remains unconfirmed." });
+    if (session.payment_status !== "paid" || session.status !== "complete") {
+      const reason = stripePaymentReason(session);
+      await s.from("tournament_registrations").update({payment_pending_reason:reason}).eq("id",entry.id);
+      return NextResponse.json({status:"not_paid",message:reason});
+    }
     return NextResponse.json(await confirmTournamentPayment(s, session));
   } catch (e: any) {
     console.error("Admin payment reconciliation failed", { registration_check_failed: true });

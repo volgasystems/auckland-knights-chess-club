@@ -30,6 +30,8 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "registered", label: "Date Registered", value: (m) => m.created_at ? new Date(m.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" }
   ],
   tournament_registrations: [
+    { key: "payment_pending_reason", label: "Payment status explanation", value: (r) => ["paid","waived","manual_paid"].includes(r.payment_status) ? "Payment recorded" : r.payment_status === "refunded" ? "Refunded" : r.payment_pending_reason || "Not yet checked — use Check payment" },
+    { key: "payment_reminder_sent_at", label: "Last payment reminder", value: (r) => r.payment_reminder_sent_at ? new Date(r.payment_reminder_sent_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "Not sent" },
     { key: "photo_consent", label: "Photo/publication consent", value: (r) => r.photo_consent === true ? "Yes" : r.photo_consent === false ? "No" : "Not recorded" },
     { key: "photo_consent_by", label: "Photo consent given by", value: (r) => r.photo_consent_by || "" },
     { key: "photo_consent_role", label: "Photo consent role", value: (r) => r.photo_consent_role || "" },
@@ -79,7 +81,8 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
 
 export const DEFAULT_COLUMNS: Record<ReportType, string[]> = {
   members: ["name", "registered", "payable", "paid", "balance", "membership_id", "membership_status", "email"],
-  tournament_registrations: ["player", "tournament", "registered", "payment_status", "membership_id", "registration_status", "email", "phone"],
+  tournament_registrations: [
+    "player", "tournament", "registered", "payment_status", "membership_id", "registration_status", "email", "phone"],
   absences: ["player", "tournament", "round", "round_date", "reason", "email", "phone", "status"],
   payments: ["type", "name", "email", "amount", "status", "date"]
 };

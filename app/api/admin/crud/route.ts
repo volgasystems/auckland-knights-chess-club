@@ -8,7 +8,7 @@ import { slugify } from "@/lib/format";
 
 const allowed = new Set(["payment_accounts","news_posts","tournaments","gallery_photos","faqs","coaches","coaching_topics","agm_meetings","agm_decisions","elected_team_members","club_settings","absences","social_posts","live_board_links","membership_options","contact_enquiries","email_templates","member_notices"]);
 const numericFields = new Set(["tournament_year","rounds","entry_fee_cents","max_players","display_order","nzcf_rating","fide_rating","fee_cents","validity_months","valid_until_month"]);
-const booleanFields = new Set(["is_published","allow_public_registration","allow_non_members","require_payment","show_public_entries","publish_to_social","is_active","show_in_calendar","publish_as_news"]);
+const booleanFields = new Set(["payment_reminders_enabled","is_published","allow_public_registration","allow_non_members","require_payment","show_public_entries","publish_to_social","is_active","show_in_calendar","publish_as_news"]);
 
 async function maybeCreateSocialDraft(s: any, table: string, data: any, clean: any, userId: string) {
   if (!clean.publish_to_social) return;

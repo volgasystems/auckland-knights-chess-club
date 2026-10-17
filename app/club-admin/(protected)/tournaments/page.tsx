@@ -13,6 +13,7 @@ export default async function TournamentsAdmin(){
   const {data}=await s.from("tournaments").select("*").order("start_date",{ascending:false});
   const policySchema = await s.from("tournaments").select("cancellation_refund_policy").limit(1);
   const hasPolicies = !policySchema.error;
+  const reminderSchema = await s.from("tournaments").select("payment_reminders_enabled").limit(1);
   const fields:any[] = [
     {name:'title',label:'Tournament name',required:true},
     {name:'slug',label:'Slug'},
@@ -43,6 +44,7 @@ export default async function TournamentsAdmin(){
     {name:'registration_close_at',label:'Registration close date',type:'date'},
     ...(hasPolicies ? [{name:'cancellation_refund_policy',label:'Cancellation and refund policy (optional override)',textarea:true,help:'Leave blank for the standard 48-hour withdrawal policy. Existing registrations keep the policy accepted at registration. NZ consumer rights wording is always included.'}] : []),
     {name:'allow_public_registration',label:'Allow public registration',type:'checkbox'},
+    ...(!reminderSchema.error ? [{name:'payment_reminders_enabled',label:'Send pending-payment reminder emails',type:'checkbox',help:'First after 24 hours, then every three days, with a final reminder before registration closes or the event starts. Paid/cancelled/refunded entries are excluded.'}] : []),
     {name:'show_public_entries',label:'Show public entries',type:'checkbox'},
     {name:'vega_url',label:'Results URL (Vega or other)' },
     {name:'lichess_url',label:'Lichess live board / broadcast URL'},
