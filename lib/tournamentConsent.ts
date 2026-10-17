@@ -11,7 +11,8 @@ export function registrationConsent(t: any, body: any, now = new Date()) {
   if (!checked(body.policy_accepted)) throw new Error("Read and accept the cancellation and refund policy.");
   const policy = cancellationPolicy(t);
   if (body.policy_snapshot !== policy) throw new Error("The tournament policy has changed. Reload the registration page and review it again.");
-  const photo = checked(body.photo_consent);
+  if (!["yes", "no"].includes(body.photo_consent)) throw new Error("Select Yes or No for photography and publication consent.");
+  const photo = body.photo_consent === "yes";
   let name: string | null = null, role: string | null = null;
   if (photo) {
     if (body.photo_notice !== PHOTO_CONSENT_NOTICE) throw new Error("The photography notice has changed. Reload and review it again.");
