@@ -1,0 +1,12 @@
+"use client";
+import { useState } from "react";
+import { cancellationPolicy, PHOTO_CONSENT_NOTICE } from "@/lib/tournamentConsent";
+export default function TournamentConsentFields({ tournament }: { tournament: any }) {
+  const [photo, setPhoto] = useState(false), [role, setRole] = useState("");
+  const policy = cancellationPolicy(tournament);
+  return <section className="md:col-span-2 space-y-5 rounded-xl border border-stone-200 bg-stone-50 p-5">
+    <div><h3 className="text-lg font-bold">Cancellation and refund policy</h3><div className="mt-3 whitespace-pre-line text-sm leading-relaxed text-stone-700">{policy}</div><input type="hidden" name="policy_snapshot" value={policy}/><label className="mt-4 flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" name="policy_accepted" required/><span>I have read and accept this tournament's cancellation and refund policy. *</span></label></div>
+    <div className="border-t border-stone-200 pt-4"><h3 className="text-lg font-bold">Photography and publication consent (optional)</h3><p className="mt-2 text-sm leading-relaxed text-stone-700">{PHOTO_CONSENT_NOTICE}</p><input type="hidden" name="photo_notice" value={PHOTO_CONSENT_NOTICE}/><label className="mt-3 flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" name="photo_consent" checked={photo} onChange={e=>setPhoto(e.target.checked)}/><span>I give the photography and publication permission described above.</span></label>
+    {photo && <div className="mt-4 grid gap-4 sm:grid-cols-2"><label><span className="label">Full name of person giving consent *</span><input name="photo_consent_by" required maxLength={150} className="input mt-1"/></label><label><span className="label">Your role *</span><select name="photo_consent_role" required value={role} onChange={e=>setRole(e.target.value)} className="input mt-1"><option value="">Select your role</option><option value="player">Player aged 18 or over</option><option value="parent_guardian">Parent / legal guardian</option></select></label>{role === "parent_guardian" && <label className="flex items-start gap-2 text-sm sm:col-span-2"><input type="checkbox" className="mt-1" name="photo_child_agreement" required/><span>I am the player's parent/legal guardian, have discussed this permission with them as appropriate for their age, and will respect their wishes.</span></label>}</div>}</div>
+  </section>;
+}

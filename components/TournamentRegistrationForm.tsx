@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/lib/format";
+import TournamentConsentFields from "@/components/TournamentConsentFields";
+import { consentSchemaAvailable } from "@/lib/tournamentConsent";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 function categories(tournament: any) {
@@ -233,6 +235,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
         <label><span className="label">Suburb</span><input name="suburb" value={address.suburb} onChange={(e) => setAddress({ ...address, suburb: e.target.value })} className="input mt-1" /></label>
         <label><span className="label">Town / City</span><input name="city" value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })} className="input mt-1" /></label>
         <label><span className="label">Postcode</span><input name="postcode" value={address.postcode} onChange={(e) => setAddress({ ...address, postcode: e.target.value })} className="input mt-1" /></label>
+        {consentSchemaAvailable(tournament) && <TournamentConsentFields tournament={tournament}/>}
         <label className="md:col-span-2 flex items-center gap-2 text-sm">
           <input name="consent" type="checkbox" required /> I confirm the registration details are accurate and agree to tournament communication.
         </label>

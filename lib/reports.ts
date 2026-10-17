@@ -30,6 +30,12 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "registered", label: "Date Registered", value: (m) => m.created_at ? new Date(m.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" }
   ],
   tournament_registrations: [
+    { key: "photo_consent", label: "Photo/publication consent", value: (r) => r.photo_consent === true ? "Yes" : r.photo_consent === false ? "No" : "Not recorded" },
+    { key: "photo_consent_by", label: "Photo consent given by", value: (r) => r.photo_consent_by || "" },
+    { key: "photo_consent_role", label: "Photo consent role", value: (r) => r.photo_consent_role || "" },
+    { key: "photo_consent_recorded_at", label: "Photo choice recorded", value: (r) => r.photo_consent_recorded_at || "" },
+    { key: "policy_accepted", label: "Refund policy accepted", value: (r) => r.cancellation_policy_accepted_at || "Not recorded" },
+    { key: "policy_snapshot", label: "Accepted refund policy", value: (r) => r.cancellation_policy_snapshot || "" },
     { key: "dob", label: "DOB", value: (r) => r.date_of_birth ? String(r.date_of_birth).slice(0, 10) : "" },
     { key: "tournament", label: "Tournament Name", value: (r) => r.tournament_title || r.tournaments?.title },
     { key: "category", label: "Category", value: (r) => r.category_name || (r.is_member_registration ? "Membership Event" : "General") },

@@ -67,6 +67,8 @@ export async function POST(req: Request){
       if (existing?.payment_account_id !== account.id) return NextResponse.json({error:"Select an active payment account."}, {status:400});
     }
   }
+  if (table === "tournaments" && clean.cancellation_refund_policy != null && (typeof clean.cancellation_refund_policy !== "string" || clean.cancellation_refund_policy.length > 10000)) return NextResponse.json({error:"Refund policy must be text of at most 10,000 characters."}, {status:400});
+  if (table === "tournament_registrations") for (const field of ["cancellation_policy_snapshot", "cancellation_policy_accepted_at", "photo_consent", "photo_consent_notice", "photo_consent_recorded_at", "photo_consent_by", "photo_consent_role", "photo_child_agreement"]) delete clean[field];
   if (table === "club_settings") {
     // Only the dedicated numbering RPC can change these; stale settings forms cannot reset the counter.
     for (const field of ["membership_id_prefix", "membership_id_start", "membership_id_next", "membership_id_digits"]) delete clean[field];

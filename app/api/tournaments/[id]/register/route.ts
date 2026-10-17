@@ -1,3 +1,4 @@
+import { consentSchemaAvailable, registrationConsent } from "@/lib/tournamentConsent";
 import { validDateOfBirth } from "@/lib/registrationValidation";
 import { notifyRegistrationReceived } from "@/lib/registrationNotification";
 import { NextResponse } from "next/server";
@@ -40,6 +41,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (tournamentError || !tournament) return NextResponse.json({ error: "Tournament not found" }, { status: 404 });
     if (tournament.status !== "open" || !tournament.allow_public_registration) return NextResponse.json({ error: "Registration is not open" }, { status: 400 });
 
+    let consentRecord = {};
+    if (consentSchemaAvailable(tournament)) {
+      try { consentRecord = registrationConsent(tournament, body); }
+      catch (error: any) { return NextResponse.json({ error: error.message }, { status: 400 }); }
+    }
     const { count, error: countError } = await s.from("tournament_registrations").select("id", { count: "exact", head: true }).eq("tournament_id", id).eq("payment_status", "paid").eq("registration_status", "confirmed");
     if (countError) throw countError;
     if (tournament.max_players && Number(count || 0) >= Number(tournament.max_players)) return NextResponse.json({ error: "Tournament has reached maximum players" }, { status: 400 });
@@ -71,6 +77,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (requiresPayment) assertPaymentReady();
 
     const { data: registration, error } = await s.from("tournament_registrations").insert({
+      ...consentRecord,
       tournament_id: id,
       membership_id: membership?.membership_id || null,
       is_member_registration: !!membership,

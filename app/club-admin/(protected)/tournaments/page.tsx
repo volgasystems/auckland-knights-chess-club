@@ -1,3 +1,4 @@
+import { DEFAULT_CANCELLATION_POLICY, STATUTORY_RIGHTS } from "@/lib/tournamentConsent";
 import { requireAdmin } from "@/lib/auth";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { paymentAccountFields } from "@/lib/paymentAccounts";
@@ -10,6 +11,8 @@ export default async function TournamentsAdmin(){
   const s=createSupabaseServiceClient();
   const accountFields = await paymentAccountFields(s);
   const {data}=await s.from("tournaments").select("*").order("start_date",{ascending:false});
+  const policySchema = await s.from("tournaments").select("cancellation_refund_policy").limit(1);
+  const hasPolicies = !policySchema.error;
   const fields:any[] = [
     {name:'title',label:'Tournament name',required:true},
     {name:'slug',label:'Slug'},
@@ -38,6 +41,7 @@ export default async function TournamentsAdmin(){
     {name:'max_players',label:'Maximum players',type:'number'},
     {name:'registration_open_at',label:'Registration open date',type:'date'},
     {name:'registration_close_at',label:'Registration close date',type:'date'},
+    ...(hasPolicies ? [{name:'cancellation_refund_policy',label:'Cancellation and refund policy (optional override)',textarea:true,help:'Leave blank for the standard 48-hour withdrawal policy. Existing registrations keep the policy accepted at registration. NZ consumer rights wording is always included.'}] : []),
     {name:'allow_public_registration',label:'Allow public registration',type:'checkbox'},
     {name:'show_public_entries',label:'Show public entries',type:'checkbox'},
     {name:'vega_url',label:'Results URL (Vega or other)' },
@@ -54,5 +58,5 @@ export default async function TournamentsAdmin(){
     fields.push({name:'publish_to_social',label:'Create social media post draft when saving',type:'checkbox'});
     fields.push({name:'social_platforms',label:'Select social media platforms',type:'multi_options',options:['Facebook','Instagram','YouTube','X','LinkedIn']});
   }
-  return <div><CrudManager table="tournaments" title="Manage Tournaments, Calendar Events and General Events" rows={data||[]} fields={fields} /><div className="card mt-6 p-5 text-sm text-slate-700"><b>Registration rules:</b><br/>• Club Calendar Event: active AK membership ID/email and separate tournament payment required.<br/>• General/Open Tournament: appears in Calendar and Results, but registration is confirmed only after Stripe payment.</div></div>;
+  return <div>{!hasPolicies && <p className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm">To enable photo consent and tournament refund policies, run supabase/migrations/20261018_tournament_consent_policy.sql in Supabase, then refresh.</p>}<details className="mb-4 rounded-xl border border-stone-200 bg-white p-4"><summary className="cursor-pointer font-bold">Standard cancellation and refund policy</summary><p className="mt-3 whitespace-pre-line text-sm">{DEFAULT_CANCELLATION_POLICY}{"\n\n"}{STATUTORY_RIGHTS}</p></details><CrudManager table="tournaments" title="Manage Tournaments, Calendar Events and General Events" rows={data||[]} fields={fields} /><div className="card mt-6 p-5 text-sm text-slate-700"><b>Registration rules:</b><br/>• Club Calendar Event: active AK membership ID/email and separate tournament payment required.<br/>• General/Open Tournament: appears in Calendar and Results, but registration is confirmed only after Stripe payment.</div></div>;
 }
