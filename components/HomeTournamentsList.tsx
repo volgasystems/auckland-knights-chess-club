@@ -15,7 +15,7 @@ export default function HomeTournamentsList({ tournaments }: { tournaments: any[
             {(t.tournament_image_url || t.image_url) ? (
               <img src={t.tournament_image_url || t.image_url} alt="" className="h-40 w-full object-cover sm:h-auto sm:w-56 sm:shrink-0" />
             ) : null}
-            <div className="flex-1 p-5">
+            <div className="min-w-0 flex-1 p-5">
               <p className="text-xs font-bold text-black">{formatDate(t.start_date)}</p>
               <h3 className="mt-2 text-lg font-extrabold">{t.title}</h3>
               <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-stone-700">
@@ -29,7 +29,11 @@ export default function HomeTournamentsList({ tournaments }: { tournaments: any[
               </div>
               <p className="mt-2 text-sm text-stone-600">{t.venue_name || t.venue || "Venue TBC"}</p>
               <p className="mt-2 text-sm font-bold">{t.entry_fee_cents ? formatMoney(t.entry_fee_cents) : "Fee TBC"}</p>
-              <Link href={`/tournaments/${t.slug}`} className="btn-primary mt-4 py-2">View Details</Link>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link href={`/tournaments/${t.slug}`} className="btn-secondary py-2">View Details</Link>
+                {t.status === "open" && (t.allow_public_registration || t.tournament_type === "club_calendar") && <Link href={`/tournaments/${t.slug}/register`} className="btn-primary py-2">Register</Link>}
+                <Link href={`/absence?tournament=${encodeURIComponent(t.title)}`} className="btn-secondary py-2">Report Absence</Link>
+              </div>
             </div>
           </article>
         ))}
