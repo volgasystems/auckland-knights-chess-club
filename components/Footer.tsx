@@ -1,7 +1,9 @@
+import { publicClubSettings } from "@/lib/publicClubSettings";
+import { clubSocialLinks } from "@/lib/clubIdentity";
+import SocialIcon from "@/components/SocialIcon";
 import { clubContactEmail, CLUB_CONTACT_PHONE, CLUB_CONTACT_PHONE_LINK } from "@/lib/clubContact";
 import Link from "next/link";
 import Image from "next/image";
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 const quickLinks = [
   ["/about", "About Us"],
@@ -22,28 +24,9 @@ const usefulChessLinks = [
   ["New Zealand Chess", "https://newzealandchess.nz/"]
 ];
 
-function SocialIcon({ label }: { label: string }) {
-  if (label === "Facebook") return <span className="text-lg font-black">f</span>;
-  if (label === "Instagram") return <span className="text-lg font-black">◎</span>;
-  if (label === "YouTube") return <span className="text-lg font-black">▶</span>;
-  return <span className="font-black">{label === "X" ? "𝕏" : label[0]}</span>;
-}
-
 export default async function Footer() {
-  let settings: any = null;
-  try {
-    const service = createSupabaseServiceClient();
-    const { data } = await service.from("club_settings").select("*").eq("id", "default").maybeSingle();
-    settings = data;
-  } catch {}
-  const social = [
-    ["Facebook", settings?.facebook_url],
-    ["Instagram", settings?.instagram_url],
-    ["YouTube", settings?.youtube_url],
-    ["Lichess", settings?.lichess_url],
-    ["X", settings?.x_url],
-    ["LinkedIn", settings?.linkedin_url]
-  ].filter(([, url]) => !!url);
+  const settings = await publicClubSettings();
+  const social = clubSocialLinks(settings);
 
   return (
     <footer className="bg-black text-white">

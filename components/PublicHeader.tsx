@@ -1,8 +1,10 @@
+import { publicClubSettings } from "@/lib/publicClubSettings";
+import { clubSocialLinks } from "@/lib/clubIdentity";
+import SocialIcon from "@/components/SocialIcon";
 import { clubContactEmail, CLUB_CONTACT_PHONE, CLUB_CONTACT_PHONE_LINK } from "@/lib/clubContact";
 import Link from "next/link";
 import Image from "next/image";
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { MapPin, Mail } from "lucide-react";
+import { MapPin, Mail, Phone } from "lucide-react";
 import MobilePublicNav from "@/components/MobilePublicNav";
 
 const mainLinks: [string, string][] = [
@@ -16,33 +18,15 @@ const mainLinks: [string, string][] = [
   ["/live-boards", "Live Boards"]
 ];
 
-function SocialIcon({ label }: { label: string }) {
-  if (label === "Facebook") return <span className="text-sm font-black">f</span>;
-  if (label === "Instagram") return <span className="text-sm font-black">◎</span>;
-  if (label === "YouTube") return <span className="text-sm font-black">▶</span>;
-  return <span className="text-sm font-black">{label === "X" ? "𝕏" : label[0]}</span>;
-}
-
 export default async function PublicHeader() {
-  let settings: any = null;
-  try {
-    const service = createSupabaseServiceClient();
-    const { data } = await service.from("club_settings").select("*").eq("id", "default").maybeSingle();
-    settings = data;
-  } catch {}
-
-  const socialLinks = [
-    ["Facebook", settings?.facebook_url],
-    ["Instagram", settings?.instagram_url],
-    ["YouTube", settings?.youtube_url],
-    ["X", settings?.x_url]
-  ].filter(([, url]) => !!url);
+  const settings = await publicClubSettings();
+  const socialLinks = clubSocialLinks(settings);
 
   return (
     <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="bg-black text-white">
-        <div className="container-page flex h-8 items-center justify-between gap-4 text-xs sm:text-sm">
-          <span className="flex min-w-0 items-center gap-2 truncate"><Mail className="h-3.5 w-3.5 text-akcc-gold" />{clubContactEmail(settings)}</span>
+        <div className="container-page flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2 text-xs sm:text-sm">
+          <a href={`mailto:${clubContactEmail(settings)}`} className="hidden min-w-0 items-center gap-2 truncate sm:flex"><Mail className="h-3.5 w-3.5 text-akcc-gold" />{clubContactEmail(settings)}</a><a href={CLUB_CONTACT_PHONE_LINK} className="flex items-center gap-2 whitespace-nowrap"><Phone className="h-3.5 w-3.5 text-akcc-gold" />{CLUB_CONTACT_PHONE}</a><Link href="/contact" className="font-bold hover:text-akcc-gold">Contact</Link>
           <span className="hidden items-center gap-2 whitespace-nowrap md:flex"><MapPin className="h-3.5 w-3.5 text-akcc-gold" />East Auckland & South Auckland</span>
           {socialLinks.length > 0 && (
             <div className="hidden items-center gap-3 lg:flex">

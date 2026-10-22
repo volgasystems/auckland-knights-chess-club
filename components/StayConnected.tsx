@@ -1,3 +1,4 @@
+import { clubSocialLinks } from "@/lib/clubIdentity";
 import { clubContactEmail, CLUB_CONTACT_PHONE, CLUB_CONTACT_PHONE_LINK } from "@/lib/clubContact";
 import { Mail, Phone } from "lucide-react";
 
@@ -13,17 +14,8 @@ function Icon({ label }: { label: string }) {
 }
 
 export default function StayConnected({ settings }: { settings: any }) {
-  const phone = CLUB_CONTACT_PHONE;
   const email = clubContactEmail(settings);
-  const links = [
-    ["Phone", phone ? `tel:${String(phone).replace(/\s+/g, "")}` : ""],
-    ["Instagram", settings?.instagram_url],
-    ["YouTube", settings?.youtube_url],
-    ["Facebook", settings?.facebook_url],
-    ["X", settings?.x_url],
-    ["Lichess", settings?.lichess_url],
-    ["Email", email ? `mailto:${email}` : ""],
-  ].filter(([, url]) => !!url) as [string, string][];
+  const links: [string,string][] = [["Phone",CLUB_CONTACT_PHONE_LINK],...clubSocialLinks(settings),["Email",`mailto:${email}`]];
 
   if (links.length === 0) return null;
 

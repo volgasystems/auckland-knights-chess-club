@@ -3,8 +3,8 @@ import { SITE_URL } from "@/lib/seo";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const routes = ["", "/about", "/join", "/contact", "/coaching", "/news", "/tournaments", "/calendar", "/results", "/faq", "/photo-gallery", "/live-boards", "/agm"];
-  const entries: MetadataRoute.Sitemap = routes.map(path => ({ url: `${SITE_URL}${path}` }));
+  const routes = ["", "/about", "/join", "/contact", "/coaching", "/news", "/tournaments", "/calendar", "/results", "/faq", "/photo-gallery", "/live-boards", "/agm", "/links"];
+  const entries: MetadataRoute.Sitemap = routes.map(path => ({ url: `${SITE_URL}${path || "/"}` }));
   try {
     const db = createSupabaseServiceClient();
     const [news, tournaments] = await Promise.all([db.from("news_posts").select("slug,updated_at").eq("is_published", true), db.from("tournaments").select("slug,updated_at").in("status", ["open", "closed", "completed"])]);
