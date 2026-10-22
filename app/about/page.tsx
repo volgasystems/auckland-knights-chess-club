@@ -30,7 +30,7 @@ export default function AboutPage() {
               <p className="text-sm font-bold uppercase tracking-[0.25em] text-blue-100">About Us</p>
               <h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">About Auckland Knights Chess Club</h1>
               <p className="mt-6 max-w-3xl text-lg leading-8 text-blue-50">
-                Auckland Knights Chess Club is a new community-focused chess club created to support young players, beginners, and chess-loving adults across South Auckland and East Auckland.
+                Auckland Knights Chess Club, also known as Auckland Knights, is a community chess club welcoming children and adults, from beginners to experienced players, across South Auckland and East Auckland. We offer opportunities to learn, practise and enjoy chess through coaching, friendly games, tournaments and community events.
               </p>
               <p className="mt-4 max-w-3xl leading-8 text-blue-100">
                 The club has been inspired by CM Sai Vivan Karthikeya Somaraju, one of New Zealand’s talented young chess players, who wanted to create a friendly place where children and adults can learn, practise, improve, and enjoy chess together.

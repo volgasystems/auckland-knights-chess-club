@@ -28,11 +28,11 @@ export default function Hero() {
             Welcome to
           </p>
           <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
-            Auckland Knights
+            Auckland Knights{" "}
             <span className="block text-akcc-gold">Chess Club</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-stone-100">
-            Building strong minds and great friendships through the game of chess.
+            Auckland Knights Chess Club welcomes children and adults, from beginners to experienced players, across East and South Auckland. Join us for chess coaching, friendly games, tournaments and community events.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link href="/about" className="btn-gold gap-2">

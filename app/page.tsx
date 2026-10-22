@@ -1,5 +1,12 @@
 import { pageMetadata } from "@/lib/seo";
-export const metadata = pageMetadata("Chess for East & South Auckland", "Auckland Knights Chess Club welcomes children, beginners and adults. Find chess tournaments, coaching, membership and community events in Auckland.", "/");
+const homeTitle = "Auckland Knights Chess Club | Auckland, NZ";
+const homeMetadata = pageMetadata("Auckland, NZ", "Auckland Knights Chess Club welcomes children and adults, from beginners to experienced players, for chess coaching, friendly games, tournaments and community events in Auckland.", "/");
+export const metadata = {
+  ...homeMetadata,
+  title: { absolute: homeTitle },
+  openGraph: { ...homeMetadata.openGraph, title: homeTitle },
+  twitter: { ...homeMetadata.twitter, title: homeTitle }
+};
 // Tournament data is managed in admin and must be read on every request.
 export const dynamic = "force-dynamic";
 
