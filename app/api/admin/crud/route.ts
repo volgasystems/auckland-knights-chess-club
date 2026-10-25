@@ -1,3 +1,4 @@
+import { paymentAccountAliases } from "@/lib/paymentAccounts";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdmin } from "@/lib/auth";
@@ -61,8 +62,8 @@ export async function POST(req: Request){
   }
   if (table === "payment_accounts" && ['create','update'].includes(action)) {
     if (!/^\d{2}-?\d{4}-?\d{7}-?\d{2,3}$/.test(clean.account_number)) return NextResponse.json({error:"Enter a valid NZ bank account number, for example 01-1234-1234567-00."},{status:400});
-    const legacy = await s.from("payment_accounts").select("account_name").limit(1);
-    if (!legacy.error) clean.account_name = clean.name;
+    try { Object.assign(clean, await paymentAccountAliases(s, clean)); }
+    catch { return NextResponse.json({error:"Payment account fields could not be checked. Refresh and try again; no account was saved."},{status:503}); }
     for (const field of ["use_for_membership", "use_for_tournaments"]) if (field in clean) clean[field] = clean[field] === true;
   }
   if (table === "tournaments" && clean.payment_account_id && ['create','update'].includes(action)) {
