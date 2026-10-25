@@ -18,6 +18,7 @@ export function paymentOpen(t: any, now = Date.now()) {
   return t.status === "open" && t.allow_public_registration && paymentDeadline(t) > now && (!t.registration_open_at || Date.parse(t.registration_open_at) <= now);
 }
 export function reminderStage(r: any, t: any, now = Date.now()) {
+  if (r.payment_method === "bank_transfer") return null;
   if (t.payment_reminders_enabled !== true || !paymentOpen(t, now) || !unpaidEntry(r)) return null;
   const age = now - Date.parse(r.created_at), last = Date.parse(r.payment_reminder_sent_at || ""), claimed = Date.parse(r.payment_reminder_claimed_at || "");
   if (Number.isFinite(claimed) && now - claimed < DAY) return null;

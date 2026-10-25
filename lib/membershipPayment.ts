@@ -56,7 +56,7 @@ export async function activateMembership(s: any, member: any) {
   const year = dateParts.year;
   const endDate = member.membership_end_date || `${year}-12-31`;
   const membershipStatus = endDate < today ? "expired" : "active";
-  const updated = checked(await s.from("club_memberships").update({ membership_id: membershipId, membership_status: membershipStatus, membership_start_date: member.membership_start_date || today, membership_end_date: endDate, updated_at: new Date().toISOString() }).eq("id", member.id).select("*").single());
+  const updated = checked(await s.from("club_memberships").update({ membership_id: membershipId, membership_status: membershipStatus, membership_start_date: member.membership_start_date || today, membership_end_date: endDate, updated_at: new Date().toISOString() }).eq("id", member.id).in("payment_status", ["paid", "manual_paid", "waived"]).neq("membership_status", "cancelled").select("*").single());
   let emailStatus = "failed";
   try { emailStatus = await sendMembershipConfirmation(s, updated); } catch {}
   return { status: membershipStatus === "active" ? "confirmed" : "expired", membership_id: membershipId, email_status: emailStatus };

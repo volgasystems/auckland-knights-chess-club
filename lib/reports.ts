@@ -10,6 +10,8 @@ export type ReportColumn = {
 
 export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
   members: [
+    { key: "payment_method", label: "Payment method", value: (r) => r.payment_method === "bank_transfer" ? "Bank transfer" : r.stripe_checkout_session_id ? "Stripe" : r.payment_method || "" },
+    { key: "payment_reference", label: "Bank reference", value: (r) => r.payment_reference || "" },
     { key: "name", label: "Name", value: (m) => `${m.first_name || ""} ${m.last_name || ""}`.trim() },
     { key: "payable", label: "Payable", value: (m) => `$${(Number(m.total_amount_cents || 0)/100).toFixed(2)}` },
     { key: "paid", label: "Paid", value: (m) => `$${(["paid", "manual_paid"].includes(m.payment_status) ? Number(m.total_amount_cents || 0)/100 : 0).toFixed(2)}` },
@@ -17,7 +19,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "email", label: "Email", value: (m) => m.email },
     { key: "phone", label: "Phone", value: (m) => m.phone },
     { key: "membership_id", label: "Member ID", value: (m) => m.membership_id },
-    { key: "membership_status", label: "Status", value: (m) => memberStatusLabel(m.membership_status) },
+    { key: "membership_status", label: "Status", value: (m) => m.payment_method === "bank_transfer" && m.payment_status === "pending_payment" ? "Tentative — bank transfer" : memberStatusLabel(m.membership_status) },
     { key: "membership_end_date", label: "Expiry Date", value: (m) => m.membership_end_date },
     { key: "school", label: "School", value: (m) => m.school },
     { key: "parent_guardian", label: "Parent/Guardian", value: (m) => [m.parent_guardian_first_name, m.parent_guardian_last_name].filter(Boolean).join(" ") || m.parent_guardian_name },
@@ -30,7 +32,9 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "registered", label: "Date Registered", value: (m) => m.created_at ? new Date(m.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" }
   ],
   tournament_registrations: [
-    { key: "payment_pending_reason", label: "Payment status explanation", value: (r) => ["paid","waived","manual_paid"].includes(r.payment_status) ? "Payment recorded" : r.payment_status === "refunded" ? "Refunded" : r.payment_pending_reason || "Not yet checked — use Check payment" },
+    { key: "payment_method", label: "Payment method", value: (r) => r.payment_method === "bank_transfer" ? "Bank transfer" : r.stripe_checkout_session_id ? "Stripe" : r.payment_method || "" },
+    { key: "payment_reference", label: "Bank reference", value: (r) => r.payment_reference || "" },
+    { key: "payment_pending_reason", label: "Payment status explanation", value: (r) => ["paid","waived","manual_paid"].includes(r.payment_status) ? "Payment recorded" : r.payment_status === "refunded" ? "Refunded" : (r.payment_method === "bank_transfer" ? "Awaiting bank transfer and admin verification" : r.payment_pending_reason || "Not yet checked — use Check payment") },
     { key: "payment_reminder_sent_at", label: "Last payment reminder", value: (r) => r.payment_reminder_sent_at ? new Date(r.payment_reminder_sent_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "Not sent" },
     { key: "photo_consent", label: "Photo/publication consent", value: (r) => r.photo_consent === true ? "Yes" : r.photo_consent === false ? "No" : "Not recorded" },
     { key: "photo_consent_by", label: "Photo consent given by", value: (r) => r.photo_consent_by || "" },
@@ -51,7 +55,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "fide_id", label: "FIDE ID", value: (r) => r.fide_id },
     { key: "fide_rating", label: "FIDE Rating", value: (r) => r.fide_rating },
     { key: "payment_status", label: "Payment", value: (r) => ["paid", "manual_paid", "waived"].includes(r.payment_status) ? "Paid" : "Unpaid" },
-    { key: "registration_status", label: "Status", value: (r) => memberStatusLabel(r.registration_status) },
+    { key: "registration_status", label: "Status", value: (r) => r.payment_method === "bank_transfer" && r.payment_status === "pending_payment" ? "Tentative — bank transfer" : memberStatusLabel(r.registration_status) },
     { key: "fee", label: "Fee", value: (r) => `$${(Number(r.entry_fee_cents || r.category_fee_cents || 0)/100).toFixed(2)}` },
     { key: "registered", label: "Date Registered", value: (r) => r.created_at ? new Date(r.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" },
     { key: "payable", label: "Payable", value: (r) => `$${(Number(r.entry_fee_cents ?? r.category_fee_cents ?? 0)/100).toFixed(2)}` },
@@ -80,8 +84,12 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
 };
 
 export const DEFAULT_COLUMNS: Record<ReportType, string[]> = {
-  members: ["name", "registered", "payable", "paid", "balance", "membership_id", "membership_status", "email"],
+  members: [
+    { key: "payment_method", label: "Payment method", value: (r) => r.payment_method === "bank_transfer" ? "Bank transfer" : r.stripe_checkout_session_id ? "Stripe" : r.payment_method || "" },
+    { key: "payment_reference", label: "Bank reference", value: (r) => r.payment_reference || "" },"name", "registered", "payable", "paid", "balance", "membership_id", "membership_status", "email"],
   tournament_registrations: [
+    { key: "payment_method", label: "Payment method", value: (r) => r.payment_method === "bank_transfer" ? "Bank transfer" : r.stripe_checkout_session_id ? "Stripe" : r.payment_method || "" },
+    { key: "payment_reference", label: "Bank reference", value: (r) => r.payment_reference || "" },
     "player", "tournament", "registered", "payment_status", "membership_id", "registration_status", "email", "phone"],
   absences: ["player", "tournament", "round", "round_date", "reason", "email", "phone", "status"],
   payments: ["type", "name", "email", "amount", "status", "date"]

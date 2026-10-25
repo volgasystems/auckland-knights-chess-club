@@ -1,3 +1,4 @@
+import { registrationPaymentMethod, prepareBankTransfer, bankInstructions } from "@/lib/bankTransfer";
 import { validDateOfBirth } from "@/lib/registrationValidation";
 import { notifyRegistrationReceived } from "@/lib/registrationNotification";
 import { NextResponse } from "next/server";
@@ -9,11 +10,14 @@ export async function POST(req: Request) {
   let savedMembershipId = "";
   try {
     const body = await req.json();
+    let method: string;
+    try { method = registrationPaymentMethod(body.payment_method); } catch (e: any) { return NextResponse.json({error:e.message},{status:400}); }
     if (!validDateOfBirth(body.date_of_birth)) return NextResponse.json({ error: "Enter a valid date of birth. Date of birth is required and cannot be in the future." }, { status: 400 });
     for (const field of ["first_name", "last_name", "email", "phone"]) {
       if (typeof body[field] !== "string" || !body[field].trim()) return NextResponse.json({ error: "Enter the required player name, email and phone." }, { status: 400 });
       body[field] = body[field].trim();
     }
+    if (!["Male", "Female", "Non-binary", "Prefer not to say", "Other"].includes(body.gender)) return NextResponse.json({error:"Please select a valid gender."},{status:400});
     body.email = body.email.toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email) || !body.terms_accepted) return NextResponse.json({ error: "Enter a valid email and accept the membership terms." }, { status: 400 });
     const s = createSupabaseServiceClient();
@@ -62,10 +66,22 @@ export async function POST(req: Request) {
       );
     }
 
-    assertPaymentReady();
+    let bank: any = null;
+    if (method === "bank_transfer") {
+      try { bank = await prepareBankTransfer(s, "membership"); } catch (e: any) { return NextResponse.json({error:e.message},{status:503}); }
+      let existingQuery = s.from("club_memberships").select("*").eq("email",body.email).eq("first_name",body.first_name).eq("last_name",body.last_name).eq("date_of_birth",body.date_of_birth).in("payment_status",["paid","manual_paid","pending_payment"]);
+      const prior = await existingQuery.order("created_at",{ascending:false}).limit(1).maybeSingle();
+      if (prior.error) throw prior.error;
+      if (prior.data) {
+        const r = prior.data;
+        if (r.payment_method === "bank_transfer" && r.payment_status === "pending_payment" && r.bank_account_snapshot && Number(r.total_amount_cents) === total) return NextResponse.json({ok:true,membership_id:r.id,payment_status:"pending_payment",bank_transfer:bankInstructions(r,total),email_status:"existing"});
+        return NextResponse.json({error:"A registration already exists for this player. Do not register or pay twice. Contact the club to check payment or change the payment method."},{status:409});
+      }
+    } else assertPaymentReady();
     const { data: record, error } = await s
       .from("club_memberships")
       .insert({
+        ...(bank || {}),
         first_name: body.first_name,
         last_name: body.last_name,
         email: body.email,
@@ -97,6 +113,10 @@ export async function POST(req: Request) {
     }
 
     savedMembershipId = record.id;
+    if (bank) {
+      const emailStatus = await notifyRegistrationReceived(s, record, "membership");
+      return NextResponse.json({ok:true, membership_id:record.id, payment_status:"pending_payment", bank_transfer:bankInstructions(record,total), email_status:emailStatus});
+    }
     const stripe = getStripe();
     const site = paymentConfiguration().siteUrl;
     const session = await stripe.checkout.sessions.create({

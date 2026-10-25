@@ -1,4 +1,5 @@
 "use client";
+import BankTransferPayment, { BankTransferInstructions, type BankDetails } from "@/components/BankTransferPayment";
 
 import { useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/lib/format";
@@ -40,6 +41,8 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
   const cats = categories(tournament);
   const isClubCalendar = tournament.tournament_type === "club_calendar";
   const [selectedCategory, setSelectedCategory] = useState(cats[0]?.key || cats[0]?.name || "default");
+  const [method,setMethod] = useState("stripe");
+  const [bank,setBank] = useState<BankDetails|null>(null);
   const [paymentMode, setPaymentMode] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [paymentAvailable, setPaymentAvailable] = useState(true);
@@ -111,6 +114,7 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
       });
       const json = await res.json();
       if (!res.ok) { setMessage(json.error || "Your registration is not confirmed. If payment was taken, do not pay again; contact akcc.nzchess@gmail.com."); return; }
+      if (json.bank_transfer) { setBank(json.bank_transfer); setMessage(`Tentative entry saved. Reference: ${json.registration_id}. ${json.email_status !== "sent" ? "Keep the bank details below; contact the club if no email arrives." : "Bank instructions have been sent by email."}`); return; }
       if (json.url) {
         setPaymentUrl(json.url);
         setMessage(`Entry reference: ${json.registration_id}. Your entry is pending payment. Redirecting to secure checkout...`);
@@ -138,11 +142,11 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
         </div>
       ) : (
         <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <b>Public tournament:</b> open to all players. Everyone pays the tournament entry fee, including club members. Your entry is <b>not confirmed</b> until Stripe payment is successfully completed.
+          <b>Public tournament:</b> open to all players. Everyone pays the tournament entry fee, including club members. Your entry is <b>not confirmed</b> until card payment is verified or an admin confirms receipt of your bank transfer.
           If you close or cancel the payment page, your entry will remain as <b>Pending Payment</b> and will not appear in the public entries list.
         </div>
       )}
-      {fee > 0 && !paymentAvailable && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-4 text-red-800">Online payment is temporarily unavailable. Contact akcc.nzchess@gmail.com to arrange registration.</p>}
+      {fee > 0 && !paymentAvailable && method === "stripe" && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-4 text-red-800">Online payment is temporarily unavailable. Contact akcc.nzchess@gmail.com to arrange registration.</p>}
       {paymentMode === "test" && <p className="mt-3 font-bold text-amber-800">Test checkout: this does not take a real payment or confirm a live paid entry.</p>}
       <p className="mt-3 text-sm text-slate-600">Current fee: <b>{fee > 0 ? formatMoney(fee) : "Not configured — contact the club"}</b>.</p>
 
@@ -241,14 +245,16 @@ export default function TournamentRegistrationForm({ tournament }: { tournament:
         </label>
       </div>
 
+      <BankTransferPayment kind="tournament" tournamentId={tournament.id} value={method} onChange={setMethod}/>
+      {bank && <BankTransferInstructions details={bank}/>}
       {message && <p role="status" aria-live="polite" className="mt-4 rounded-lg bg-slate-50 p-3 text-sm font-bold text-slate-800">{message}</p>}
       {paymentUrl && (
         <a href={paymentUrl} className="btn-secondary mt-4" target="_self">
           Open payment page
         </a>
       )}
-      <button disabled={loading || confirmed || fee <= 0 || (fee > 0 && !paymentAvailable) || (isClubCalendar && !member)} className="btn-primary mt-6">
-        {confirmed ? "Registration Confirmed" : loading ? "Submitting..." : "Continue to Payment"}
+      <button disabled={loading || confirmed || !!bank || fee <= 0 || (method === "stripe" && fee > 0 && !paymentAvailable) || (isClubCalendar && !member)} className="btn-primary mt-6">
+        {bank ? "Tentative entry saved" : confirmed ? "Registration Confirmed" : loading ? "Submitting..." : method === "bank_transfer" ? "Register and get bank transfer reference" : "Continue to Payment"}
       </button>
       {isClubCalendar && !member && <p className="mt-2 text-xs text-slate-500">Use Find Member first so the form can populate active membership details.</p>}
     </form>

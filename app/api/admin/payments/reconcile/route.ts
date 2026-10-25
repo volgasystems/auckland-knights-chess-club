@@ -22,6 +22,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ status: "confirmed", email_status: await tryTournamentConfirmation(s, entry, tournament), message: "Manual payment recorded. Entry confirmed." });
       }
     }
+    if (entry.payment_method === "bank_transfer" && entry.payment_status !== "paid") return NextResponse.json({error:`Tentative bank-transfer entry. Verify reference ${entry.payment_reference || entry.id} in the bank account, then use Confirm payment → Bank transfer received.`},{status:409});
     if (!entry.stripe_checkout_session_id) {
       if (entry.payment_status === "paid" && entry.registration_status === "confirmed" && Number(entry.entry_fee_cents) === 0) {
         const { data: tournament, error } = await s.from("tournaments").select("*").eq("id", entry.tournament_id).single();

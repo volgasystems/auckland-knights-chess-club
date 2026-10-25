@@ -29,6 +29,7 @@ export async function POST(req: Request) {
       if (member.membership_status === "cancelled") throw new Error("Cancelled membership");
       return NextResponse.json(await activateMembership(s, member));
     }
+    if (member.payment_method === "bank_transfer" && member.payment_status !== "paid") return NextResponse.json({error:`Tentative bank transfer. Verify reference ${member.payment_reference || member.id}, then use Confirm payment → Bank transfer received.`},{status:409});
     if (!member.stripe_checkout_session_id) return NextResponse.json({ error: "No Stripe checkout is linked. Verify payment before marking it paid." }, { status: 400 });
     const session = await getStripe().checkout.sessions.retrieve(member.stripe_checkout_session_id);
     if (session.payment_status !== "paid") return NextResponse.json({ error: "Stripe has not confirmed payment. No charge was created." }, { status: 400 });

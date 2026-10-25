@@ -1,4 +1,5 @@
 import { consentSchemaAvailable, registrationConsent } from "@/lib/tournamentConsent";
+import { registrationPaymentMethod, prepareBankTransfer, bankInstructions } from "@/lib/bankTransfer";
 import { validDateOfBirth } from "@/lib/registrationValidation";
 import { notifyRegistrationReceived } from "@/lib/registrationNotification";
 import { NextResponse } from "next/server";
@@ -26,6 +27,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const { id } = await params;
     const body = await req.json();
+    let method: string;
+    try { method = registrationPaymentMethod(body.payment_method); } catch (e: any) { return NextResponse.json({error:e.message},{status:400}); }
     if (!validDateOfBirth(body.date_of_birth)) return NextResponse.json({ error: "Enter a valid date of birth. Date of birth is required and cannot be in the future." }, { status: 400 });
     for (const field of ["first_name", "last_name", "email", "phone"]) {
       if (typeof body[field] !== "string" || !body[field].trim() || body[field].length > 254) return NextResponse.json({ error: "Enter your first name, last name, email and phone before registering." }, { status: 400 });
@@ -74,10 +77,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const requiresPayment = true;
     if (requiresPayment && entryFeeCents <= 0) return NextResponse.json({ error: "This tournament requires payment, but no fee has been configured. Please contact the club." }, { status: 400 });
 
-    if (requiresPayment) assertPaymentReady();
+    let bank: any = null;
+    if (method === "bank_transfer") {
+      try { bank = await prepareBankTransfer(s, "tournament", tournament); } catch (e: any) { return NextResponse.json({error:e.message},{status:503}); }
+      let existingQuery = s.from("tournament_registrations").select("*").eq("email",body.email).eq("first_name",body.first_name).eq("last_name",body.last_name).eq("date_of_birth",body.date_of_birth).in("payment_status",["paid","manual_paid","pending_payment"]);
+      existingQuery = existingQuery.eq("tournament_id",id);
+      const prior = await existingQuery.order("created_at",{ascending:false}).limit(1).maybeSingle();
+      if (prior.error) throw prior.error;
+      if (prior.data) {
+        const r = prior.data;
+        if (r.payment_method === "bank_transfer" && r.payment_status === "pending_payment" && r.bank_account_snapshot && Number(r.entry_fee_cents) === entryFeeCents) return NextResponse.json({ok:true,registration_id:r.id,payment_status:"pending_payment",bank_transfer:bankInstructions(r,entryFeeCents),email_status:"existing"});
+        return NextResponse.json({error:"A registration already exists for this player. Do not register or pay twice. Contact the club to check payment or change the payment method."},{status:409});
+      }
+    } else if (requiresPayment) assertPaymentReady();
 
     const { data: registration, error } = await s.from("tournament_registrations").insert({
       ...consentRecord,
+      ...(bank || {}),
       tournament_id: id,
       membership_id: membership?.membership_id || null,
       is_member_registration: !!membership,
@@ -111,6 +127,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (error) throw error;
 
     savedRegistrationId = registration.id;
+    if (bank) {
+      const emailStatus = await notifyRegistrationReceived(s, registration, "tournament", tournament.title);
+      return NextResponse.json({ok:true, registration_id:registration.id, payment_status:"pending_payment", registration_status:"pending_payment", bank_transfer:bankInstructions(registration,entryFeeCents), email_status:emailStatus});
+    }
     const stripe = getStripe();
     const site = paymentConfiguration().siteUrl;
     const session = await stripe.checkout.sessions.create({

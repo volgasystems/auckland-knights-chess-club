@@ -8,7 +8,7 @@ import { slugify } from "@/lib/format";
 
 const allowed = new Set(["payment_accounts","news_posts","tournaments","gallery_photos","faqs","coaches","coaching_topics","agm_meetings","agm_decisions","elected_team_members","club_settings","absences","social_posts","live_board_links","membership_options","contact_enquiries","email_templates","member_notices"]);
 const numericFields = new Set(["tournament_year","rounds","entry_fee_cents","max_players","display_order","nzcf_rating","fide_rating","fee_cents","validity_months","valid_until_month"]);
-const booleanFields = new Set(["payment_reminders_enabled","is_published","allow_public_registration","allow_non_members","require_payment","show_public_entries","publish_to_social","is_active","show_in_calendar","publish_as_news"]);
+const booleanFields = new Set(["use_for_membership","use_for_tournaments","payment_reminders_enabled","is_published","allow_public_registration","allow_non_members","require_payment","show_public_entries","publish_to_social","is_active","show_in_calendar","publish_as_news"]);
 
 async function maybeCreateSocialDraft(s: any, table: string, data: any, clean: any, userId: string) {
   if (!clean.publish_to_social) return;
@@ -55,9 +55,15 @@ export async function POST(req: Request){
   const clean:any={...payload, updated_at:new Date().toISOString()};
 
   if (table === "payment_accounts" && ['create','update'].includes(action)) {
-    for (const key of Object.keys(clean)) if (!["name", "code", "account_number", "purpose", "is_active", "updated_at"].includes(key)) delete clean[key];
+    for (const key of Object.keys(clean)) if (!["name", "code", "account_number", "purpose", "is_active", "use_for_membership", "use_for_tournaments", "updated_at"].includes(key)) delete clean[key];
     for (const key of ["name", "code", "account_number", "purpose"]) clean[key] = String(clean[key] || "").trim();
     if (!clean.name || !clean.code || !clean.account_number || !clean.purpose || Object.values(clean).some(v => typeof v === "string" && v.length > 500)) return NextResponse.json({error:"Account name, code, number and purpose are required (maximum 500 characters each)."}, {status:400});
+  }
+  if (table === "payment_accounts" && ['create','update'].includes(action)) {
+    if (!/^\d{2}-?\d{4}-?\d{7}-?\d{2,3}$/.test(clean.account_number)) return NextResponse.json({error:"Enter a valid NZ bank account number, for example 01-1234-1234567-00."},{status:400});
+    const legacy = await s.from("payment_accounts").select("account_name").limit(1);
+    if (!legacy.error) clean.account_name = clean.name;
+    for (const field of ["use_for_membership", "use_for_tournaments"]) if (field in clean) clean[field] = clean[field] === true;
   }
   if (table === "tournaments" && clean.payment_account_id && ['create','update'].includes(action)) {
     const {data: account} = await s.from("payment_accounts").select("id,is_active").eq("id", clean.payment_account_id).maybeSingle();
@@ -103,14 +109,14 @@ export async function POST(req: Request){
     if(table==='club_settings') clean.id='default';
     if(!['payment_accounts','membership_options','agm_decisions','elected_team_members'].includes(table)) clean.created_by=admin.user.id;
     const {data,error}=await s.from(table).insert(clean).select().single();
-    if(error) return NextResponse.json({error:error.message},{status:400});
+    if(error) return NextResponse.json({error:table === "payment_accounts" && error.code === "23505" ? "A default account already exists. Edit that account to untick its default setting first, then select the new default." : error.message},{status:400});
     await maybeCreateSocialDraft(s, table, data, clean, admin.user.id);
     await maybeCreateNewsFromSocial(s, table, data, clean, admin.user.id);
     return NextResponse.json({data});
   }
   if(action==='update'){
     const {data,error}=await s.from(table).update(clean).eq('id',id).select().single();
-    if(error) return NextResponse.json({error:error.message},{status:400});
+    if(error) return NextResponse.json({error:table === "payment_accounts" && error.code === "23505" ? "A default account already exists. Edit that account to untick its default setting first, then select the new default." : error.message},{status:400});
     await maybeCreateSocialDraft(s, table, data, clean, admin.user.id);
     await maybeCreateNewsFromSocial(s, table, data, clean, admin.user.id);
     return NextResponse.json({data});

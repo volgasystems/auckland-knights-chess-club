@@ -46,6 +46,7 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-3xl font-extrabold">Tournament Registrations</h1><a href={buildReportPageQuery(base, ["player", "tournament", "photo_consent", "photo_consent_by", "photo_consent_role", "photo_consent_recorded_at", "policy_accepted", "phone"], false)} className="btn-secondary">Photo Consent Report</a><a href={`/club-admin/tournament-registrations/players${sp.tournament_id ? `?tournament_id=${encodeURIComponent(sp.tournament_id)}` : ""}`} className="btn-secondary">Player / Vega Report</a></div>
       <p className="mt-2 text-stone-600">Choose filters and columns before exporting. Public entries show only paid and confirmed players.</p>
+      <p className="mt-2 text-sm text-amber-800">Bank transfers remain tentative until receipt is verified. Choose Payment method and Bank reference in report columns. Admins can use the green Confirm payment button after checking the bank account.</p>
 
       <PaymentDiagnostics />
       <PaymentReminders ready={!reminderSchema.error} scheduled={!!process.env.CRON_SECRET && process.env.CRON_SECRET.length >= 32} tournamentId={sp.tournament_id} canSend={["admin","super_admin"].includes(admin.profile.role)} />

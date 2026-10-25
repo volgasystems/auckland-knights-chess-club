@@ -15,6 +15,7 @@ export async function POST(req: Request) {
     const s = createSupabaseServiceClient();
     const {data:r,error} = await s.from("tournament_registrations").select("*, tournaments(*)").eq("id",id).single();
     if (error || !r) throw new Error("review");
+    if (r.payment_method === "bank_transfer") throw new Error("bank transfer awaiting admin verification");
     if (!unpaidEntry(r)) throw new Error("settled");
     const result = await inspectEntryPayment(s,r);
     if (result.state !== "unpaid") throw new Error(result.state === "paid" ? "settled" : "review");
