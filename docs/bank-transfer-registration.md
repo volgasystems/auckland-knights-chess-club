@@ -1,6 +1,6 @@
 # Registration by bank transfer
 
-The account save fix supports the deployed legacy `account_name` column and canonical `name`. Both are kept consistent. Network failures reset the Save button.
+The account save fix detects legacy `account_name`, `bank_account_name` and `bank_account_number` columns independently and populates each detected alias from validated canonical `name`/`account_number` values on create and update. Network failures reset the Save button.
 
 ## Activate
 

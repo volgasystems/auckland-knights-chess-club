@@ -4,15 +4,17 @@ import { Download, FileText, Rocket, ShieldCheck } from "lucide-react";
 const docs = [
   {
     title: "Deployment Guide",
-    description: "Step-by-step production deployment guide for Vercel, Supabase, Stripe, email configuration, custom domain, and go-live checks.",
-    href: "/docs/akcc_deployment_guide.pdf",
+    description: "Deployment, database migrations, legacy account fields, Stripe and bank transfers, email reminders, authentication, production checks and recovery.",
+    href: "/docs/akcc_deployment_guide.pdf?v=20261025",
+    pages: 6,
     icon: Rocket,
     tag: "Technical setup"
   },
   {
     title: "Admin & Super Admin User Guide",
-    description: "Product user guide for Super Admins and Admins covering members, tournaments, calendar, payments, reports, email, social posts, and settings.",
-    href: "/docs/akcc_admin_super_admin_user_guide.pdf",
+    description: "Daily operations for dashboard analytics, memberships, tournaments, tentative bank transfers, payment approval, consent, refunds, reports, enquiries and publishing.",
+    href: "/docs/akcc_admin_super_admin_user_guide.pdf?v=20261025",
+    pages: 7,
     icon: ShieldCheck,
     tag: "Operations guide"
   }
@@ -24,6 +26,7 @@ export default function DocumentationPage() {
       <div>
         <p className="text-sm font-bold uppercase tracking-[0.25em] text-akcc-gold">Auckland Knights Chess Club</p>
         <h1 className="mt-2 text-3xl font-extrabold text-stone-950">Product Documentation</h1>
+        <p className="mt-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-950">Revision 2.0 · Updated 25 October 2026</p>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-700">
           Download the latest deployment and admin user documentation. These documents are included with the deployable application package and can be shared with technical support, club admins, or committee members.
         </p>
@@ -42,6 +45,7 @@ export default function DocumentationPage() {
                   <div className="text-xs font-extrabold uppercase tracking-wide text-akcc-gold">{doc.tag}</div>
                   <h2 className="mt-1 text-xl font-extrabold text-stone-950">{doc.title}</h2>
                   <p className="mt-2 text-sm leading-6 text-stone-700">{doc.description}</p>
+                  <p className="mt-2 text-xs text-stone-500">{doc.pages} pages · October 2026 website features</p>
                   <div className="mt-5 flex flex-wrap gap-3">
                     <Link href={doc.href} target="_blank" className="inline-flex items-center gap-2 rounded-lg border border-stone-300 px-4 py-2 text-sm font-bold text-stone-900 hover:border-black">
                       <FileText className="h-4 w-4" /> Open PDF
@@ -56,6 +60,17 @@ export default function DocumentationPage() {
           );
         })}
       </div>
+
+      <section className="rounded-2xl border border-stone-200 bg-white p-6">
+        <h2 className="text-lg font-extrabold">Included in this revision</h2>
+        <ul className="mt-3 grid list-disc gap-3 pl-5 text-sm leading-6 text-stone-700 md:grid-cols-2">
+          <li>Separate membership, tournament, payment, event, enquiry and absence analytics with date and tournament filters.</li>
+          <li>Payment-account setup, tentative bank-transfer registrations and audited Admin/Super Admin confirmation.</li>
+          <li>Required photography Yes/No choice, guardian consent, tournament refund policies and safe public exports.</li>
+          <li>Payment reminders, email diagnostics, 10-minute inactivity sessions, profile settings and password changes.</li>
+        </ul>
+        <p className="mt-4 text-xs leading-5 text-stone-500">The guides explain required setup; they do not certify that every optional migration, bank account, email service or scheduled job is active. Native mobile-app development is maintained separately.</p>
+      </section>
 
       <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-stone-800">
         <b>Note:</b> Keep these PDFs updated whenever the application configuration or operating process changes. For production deployment, store environment variables in Vercel rather than committing secret values to GitHub.
