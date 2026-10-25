@@ -1,5 +1,5 @@
 const DAY = 86400000;
-export type DailyActivity = { date:string; members:number; registrations:number; totalMembers:number; totalRegistrations:number; membershipCents:number; tournamentCents:number };
+export type DailyActivity = { date:string; members:number; registrations:number; totalMembers:number; totalRegistrations:number; membershipCents:number; tournamentCents:number; events:number; enquiries:number; absences:number; totalEvents:number; totalEnquiries:number; totalAbsences:number };
 export function nzDay(value: string | Date | number) {
   if(value == null || value === "") return "";
   const d = new Date(value); if (!Number.isFinite(d.getTime())) return "";
@@ -26,7 +26,7 @@ export function dashboardAnalytics(members:any[], entries:any[], payments:any[],
   const today=nzDay(now),start=shiftDay(today,1-days),previousStart=shiftDay(start,-days);
   const regs=tournamentId?entries.filter(r=>r.tournament_id===tournamentId):entries;
   const ids=new Set(regs.map(r=>r.id));
-  const daily:DailyActivity[]=Array.from({length:days},(_,i)=>({date:shiftDay(start,i),members:0,registrations:0,totalMembers:0,totalRegistrations:0,membershipCents:0,tournamentCents:0}));
+  const daily:DailyActivity[]=Array.from({length:days},(_,i)=>({date:shiftDay(start,i),members:0,registrations:0,totalMembers:0,totalRegistrations:0,membershipCents:0,tournamentCents:0,events:0,enquiries:0,absences:0,totalEvents:0,totalEnquiries:0,totalAbsences:0}));
   const byDay=new Map(daily.map(d=>[d.date,d]));let baseMembers=0,baseRegistrations=0,previousRegistrations=0;
   const status={paid:0,pending:0,cancelled:0,other:0};
   for(const member of members){const date=nzDay(member.created_at);if(!date||date>today)continue;if(date<start)baseMembers++;else byDay.get(date)!.members++;}
@@ -35,7 +35,7 @@ export function dashboardAnalytics(members:any[], entries:any[], payments:any[],
     if(!["paid","manual_paid"].includes(p.status))continue;
     const date=nzDay(p.created_at),row=byDay.get(date),amount=Number(p.amount_cents);
     if(!row||!Number.isSafeInteger(amount)||amount<=0)continue;
-    if(p.payment_type==="membership"&&!tournamentId)row.membershipCents+=amount;
+    if(p.payment_type==="membership")row.membershipCents+=amount;
     if(p.payment_type==="tournament"&&(!tournamentId||ids.has(p.reference_id)))row.tournamentCents+=amount;
   }
   for(const row of daily){baseMembers+=row.members;baseRegistrations+=row.registrations;row.totalMembers=baseMembers;row.totalRegistrations=baseRegistrations;}

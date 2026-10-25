@@ -65,7 +65,7 @@ export default function EnquiriesManager({ enquiries }: { enquiries: any[] }) {
         </thead>
         <tbody>
           {enquiries.map((e: any) => (
-            <tr key={e.id} className="border-t align-top">
+            <tr key={e.id} id={`enquiry-${e.id}`} className="scroll-mt-24 border-t align-top">
               <td className="p-3 whitespace-nowrap">{formatStableDate(e.created_at)}</td>
               <td className="p-3 font-bold">{e.full_name}</td>
               <td className="p-3">{e.enquiry_type}</td>
