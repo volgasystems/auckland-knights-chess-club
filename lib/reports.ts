@@ -85,11 +85,9 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
 
 export const DEFAULT_COLUMNS: Record<ReportType, string[]> = {
   members: [
-    { key: "payment_method", label: "Payment method", value: (r) => r.payment_method === "bank_transfer" ? "Bank transfer" : r.stripe_checkout_session_id ? "Stripe" : r.payment_method || "" },
-    { key: "payment_reference", label: "Bank reference", value: (r) => r.payment_reference || "" },"name", "registered", "payable", "paid", "balance", "membership_id", "membership_status", "email"],
+"name", "registered", "payable", "paid", "balance", "membership_id", "membership_status", "email"],
   tournament_registrations: [
-    { key: "payment_method", label: "Payment method", value: (r) => r.payment_method === "bank_transfer" ? "Bank transfer" : r.stripe_checkout_session_id ? "Stripe" : r.payment_method || "" },
-    { key: "payment_reference", label: "Bank reference", value: (r) => r.payment_reference || "" },
+
     "player", "tournament", "registered", "payment_status", "membership_id", "registration_status", "email", "phone"],
   absences: ["player", "tournament", "round", "round_date", "reason", "email", "phone", "status"],
   payments: ["type", "name", "email", "amount", "status", "date"]
