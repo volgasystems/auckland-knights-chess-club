@@ -30,7 +30,7 @@ export async function applyTournamentRefund(s: any, charge: any, entry?: any) {
   revalidatePath("/club-admin/dashboard");
   revalidatePath("/club-admin/reports");
   revalidatePath("/tournaments", "layout");
-  return { registration_id: entry.id, status: "refunded", message: "Stripe confirms a full refund. Entry cancelled and removed from confirmed players. Payment history retained." };
+  return { registration_id: entry.id, stripe_charge_id: charge.id, status: "refunded", message: "Stripe confirms a full refund. Entry cancelled and removed from confirmed players. Payment history retained." };
 }
 
 export async function reconcileTournamentRefund(s: any, session: any, entry: any) {

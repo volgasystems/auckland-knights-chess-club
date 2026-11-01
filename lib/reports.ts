@@ -32,6 +32,12 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "registered", label: "Date Registered", value: (m) => m.created_at ? new Date(m.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" }
   ],
   tournament_registrations: [
+    {key:"withdrawn_at",label:"Withdrawn at",value:r=>r.withdrawn_at?new Date(r.withdrawn_at).toLocaleString("en-NZ",{timeZone:"Pacific/Auckland"}):""},
+    {key:"withdrawal_reason",label:"Withdrawal reason",value:r=>r.withdrawal_reason||""},
+    {key:"refund_status",label:"Refund status",value:r=>r.refund_status|| (r.payment_status==="refunded"?"Refunded":"")},
+    {key:"refund_requested_cents",label:"Refund due",value:r=>r.refund_requested_cents!=null?`NZ$${(Number(r.refund_requested_cents)/100).toFixed(2)}`:""},
+    {key:"refund_reference",label:"Refund reference",value:r=>r.refund_reference||""},
+
     { key: "payment_method", label: "Payment method", value: (r) => r.payment_method === "bank_transfer" ? "Bank transfer" : r.stripe_checkout_session_id ? "Stripe" : r.payment_method || "" },
     { key: "payment_reference", label: "Bank reference", value: (r) => r.payment_reference || "" },
     { key: "payment_pending_reason", label: "Payment status explanation", value: (r) => ["paid","waived","manual_paid"].includes(r.payment_status) ? "Payment recorded" : r.payment_status === "refunded" ? "Refunded" : (r.payment_method === "bank_transfer" ? "Awaiting bank transfer and admin verification" : r.payment_pending_reason || "Not yet checked — use Check payment") },
@@ -54,8 +60,8 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "nzcf_rating", label: "NZCF Rating", value: (r) => r.nzcf_rating },
     { key: "fide_id", label: "FIDE ID", value: (r) => r.fide_id },
     { key: "fide_rating", label: "FIDE Rating", value: (r) => r.fide_rating },
-    { key: "payment_status", label: "Payment", value: (r) => ["paid", "manual_paid", "waived"].includes(r.payment_status) ? "Paid" : "Unpaid" },
-    { key: "registration_status", label: "Status", value: (r) => r.payment_method === "bank_transfer" && r.payment_status === "pending_payment" ? "Tentative — bank transfer" : memberStatusLabel(r.registration_status) },
+    { key: "payment_status", label: "Payment", value: (r) => r.payment_status === "refunded" ? "Refunded" : ["paid", "manual_paid", "waived"].includes(r.payment_status) ? "Paid" : "Unpaid" },
+    { key: "registration_status", label: "Status", value: (r) => r.withdrawn_at ? "Withdrawn" : r.payment_method === "bank_transfer" && r.payment_status === "pending_payment" ? "Tentative — bank transfer" : memberStatusLabel(r.registration_status) },
     { key: "fee", label: "Fee", value: (r) => `$${(Number(r.entry_fee_cents || r.category_fee_cents || 0)/100).toFixed(2)}` },
     { key: "registered", label: "Date Registered", value: (r) => r.created_at ? new Date(r.created_at).toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }) : "" },
     { key: "payable", label: "Payable", value: (r) => `$${(Number(r.entry_fee_cents ?? r.category_fee_cents ?? 0)/100).toFixed(2)}` },

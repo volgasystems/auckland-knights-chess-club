@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     if (["checkout.session.expired", "checkout.session.async_payment_failed"].includes(event.type)) {
       const expired = event.type === "checkout.session.expired";
       if (type === "tournament_registration") {
-        const { data: entry, error } = await s.from("tournament_registrations").update({ payment_status: expired ? "expired" : "failed", registration_status: expired ? "expired" : "pending_payment", updated_at: new Date().toISOString() }).eq("id", session.metadata.registration_id).eq("stripe_checkout_session_id", session.id).in("payment_status", ["pending_payment", "failed"]).select("*").maybeSingle();
+        const { data: entry, error } = await s.from("tournament_registrations").update({ payment_status: expired ? "expired" : "failed", registration_status: expired ? "expired" : "pending_payment", updated_at: new Date().toISOString() }).eq("id", session.metadata.registration_id).eq("stripe_checkout_session_id", session.id).in("payment_status", ["pending_payment", "failed"]).neq("registration_status", "cancelled").select("*").maybeSingle();
         if (error) throw error;
         if (entry && !expired) {
           const { data: tournament, error } = await s.from("tournaments").select("*").eq("id", entry.tournament_id).single();

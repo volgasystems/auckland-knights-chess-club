@@ -39,6 +39,8 @@ async function getRows(type: ReportType, role: string, params: FilterParams) {
     if (!canAccess(role, "tournament_registrations")) throw new Error("Permission denied");
     let q = s.from("tournament_registrations").select("*, tournaments(title)");
     const tournamentId = params.get("tournament_id");
+    if (["pending","completed","not_required"].includes(params.get("refund_status")||"")) q=q.eq("refund_status",params.get("refund_status"));
+    if (["cancelled","confirmed","pending_payment"].includes(params.get("registration_status")||"")) q=q.eq("registration_status",params.get("registration_status"));
     const paymentStatus = params.get("payment_status");
     const sort = params.get("sort") || "created_at_desc";
     if (params.get("report") === "players" && params.get("entries") !== "all") q = q.eq("payment_status", "paid").eq("registration_status", "confirmed");

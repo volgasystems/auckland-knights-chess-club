@@ -14,7 +14,7 @@ export async function DELETE(req: Request) {
     const s = createSupabaseServiceClient();
     const {data:entry,error} = await s.from("tournament_registrations").select("*").eq("id",id).single();
     if (error || !entry) return NextResponse.json({error:"Registration not found."},{status:404});
-    if (["paid","manual_paid","refunded"].includes(entry.payment_status)) return NextResponse.json({error:"Paid or refunded registrations must be retained for payment records. Contact the club administrator to cancel the entry."},{status:409});
+    if (["paid","manual_paid","refunded"].includes(entry.payment_status)) return NextResponse.json({error:"Paid or refunded registrations must be retained. Admin/Super Admin can use the amber Withdraw / Refund button to withdraw the player and track the refund."},{status:409});
     if (entry.stripe_checkout_session_id) {
       const stripe = getStripe();
       const session = await stripe.checkout.sessions.retrieve(entry.stripe_checkout_session_id);
