@@ -55,7 +55,7 @@ export async function POST(req: Request) {
         if (error) throw error;
       }
       if (type === "membership" && expired) {
-        const { error } = await s.from("club_memberships").update({ payment_status: "expired", membership_status: "expired" }).eq("id", session.metadata.membership_id).eq("payment_status", "pending_payment");
+        const { error } = await s.from("club_memberships").update({ payment_status: "expired", membership_status: "expired" }).eq("id", session.metadata.membership_id).eq("payment_status", "pending_payment").neq("membership_status","cancelled");
         if (error) throw error;
       }
     }

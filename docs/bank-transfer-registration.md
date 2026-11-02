@@ -22,3 +22,7 @@ Choose **Payment method** and **Bank reference** in registration report columns 
 ## Verification
 
 Automated tests cover legacy account names, server-controlled fees/accounts, pending state, repeated submissions, account selection, acknowledgement emails, reminder suppression, admin authorisation, atomic/idempotent receipt creation, duplicate indexes, refunds and capacity checks. No real payment, refund, membership approval or production test registration was performed.
+
+## Expanded membership administration
+
+Membership cash, bank and verified manual confirmation plus withdrawal/receipt-specific refunds are documented in `docs/membership-payments-withdrawals.md` and require `20261102_membership_payments_withdrawals.sql`. The original bank-registration SQL does not enable those expanded actions by itself.

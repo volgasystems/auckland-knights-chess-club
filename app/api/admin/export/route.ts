@@ -18,6 +18,7 @@ async function getRows(type: ReportType, role: string, params: FilterParams) {
     if (!canAccess(role, "members")) throw new Error("Permission denied");
     let q = s.from("club_memberships").select("*");
     q = applyMemberSearch(q, params.get("search"));
+    if (["pending","completed","not_required"].includes(params.get("refund_status")||""))q=q.eq("refund_status",params.get("refund_status"));
     if (params.get("reference")) q = q.ilike("membership_id", String(params.get("reference")).trim().replace(/[\\%_]/g, "\\$&"));
     const memberStatus = params.get("membership_status");
     if (memberStatus) q = q.eq("membership_status", memberStatus);

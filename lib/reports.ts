@@ -10,6 +10,13 @@ export type ReportColumn = {
 
 export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
   members: [
+    {key:"withdrawn_at",label:"Withdrawn at",value:m=>m.withdrawn_at||""},
+    {key:"withdrawal_reason",label:"Withdrawal reason",value:m=>m.withdrawal_reason||""},
+    {key:"refund_status",label:"Refund status",value:m=>m.refund_status||""},
+    {key:"refund_payment_record_id",label:"Refund receipt",value:m=>m.refund_payment_record_id||""},
+    {key:"refund_requested_cents",label:"Latest refund amount",value:m=>m.refund_requested_cents!=null?`NZ$${(Number(m.refund_requested_cents)/100).toFixed(2)}`:""},
+    {key:"refund_reference",label:"Refund reference",value:m=>m.refund_reference||""},
+
     { key: "payment_method", label: "Payment method", value: (r) => r.payment_method === "bank_transfer" ? "Bank transfer" : r.stripe_checkout_session_id ? "Stripe" : r.payment_method || "" },
     { key: "payment_reference", label: "Bank reference", value: (r) => r.payment_reference || "" },
     { key: "name", label: "Name", value: (m) => `${m.first_name || ""} ${m.last_name || ""}`.trim() },
@@ -19,7 +26,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "email", label: "Email", value: (m) => m.email },
     { key: "phone", label: "Phone", value: (m) => m.phone },
     { key: "membership_id", label: "Member ID", value: (m) => m.membership_id },
-    { key: "membership_status", label: "Status", value: (m) => m.payment_method === "bank_transfer" && m.payment_status === "pending_payment" ? "Tentative — bank transfer" : memberStatusLabel(m.membership_status) },
+    { key: "membership_status", label: "Status", value: (m) => m.withdrawn_at ? "Withdrawn" : m.payment_method === "bank_transfer" && m.payment_status === "pending_payment" ? "Tentative — bank transfer" : memberStatusLabel(m.membership_status) },
     { key: "membership_end_date", label: "Expiry Date", value: (m) => m.membership_end_date },
     { key: "school", label: "School", value: (m) => m.school },
     { key: "parent_guardian", label: "Parent/Guardian", value: (m) => [m.parent_guardian_first_name, m.parent_guardian_last_name].filter(Boolean).join(" ") || m.parent_guardian_name },
