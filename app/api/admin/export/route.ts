@@ -1,3 +1,4 @@
+import { vegaPlayerRows } from "@/lib/vegaPlayerExport";
 import { applyMemberSearch } from "@/lib/memberSearch";
 import { NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/auth";
@@ -40,17 +41,27 @@ async function getRows(type: ReportType, role: string, params: FilterParams) {
     if (!canAccess(role, "tournament_registrations")) throw new Error("Permission denied");
     let q = s.from("tournament_registrations").select("*, tournaments(title)");
     const tournamentId = params.get("tournament_id");
-    if (["pending","completed","not_required"].includes(params.get("refund_status")||"")) q=q.eq("refund_status",params.get("refund_status"));
-    if (["cancelled","confirmed","pending_payment"].includes(params.get("registration_status")||"")) q=q.eq("registration_status",params.get("registration_status"));
-    const paymentStatus = params.get("payment_status");
-    const sort = params.get("sort") || "created_at_desc";
-    if (params.get("report") === "players" && params.get("entries") !== "all") q = q.eq("payment_status", "paid").eq("registration_status", "confirmed");
+    const vega = params.get("format") === "vega";
+    const players = params.get("report") === "players";
+    if (vega && !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(tournamentId || "")) throw new Error("Select one tournament before downloading the Vega player CSV.");
     if (tournamentId) q = q.eq("tournament_id", tournamentId);
-    if (paymentStatus) q = q.eq("payment_status", paymentStatus);
-    if (sort === "nzcf_desc") q = q.order("nzcf_rating", { ascending: false, nullsFirst: false });
+    if (vega || (players && params.get("entries") !== "all")) q = q.eq("payment_status", "paid").eq("registration_status", "confirmed");
+    if (!vega) {
+      const refund = params.get("refund_status") || "";
+      const registration = params.get("registration_status") || "";
+      const payment = params.get("payment_status");
+      if (["pending","completed","not_required"].includes(refund)) q=q.eq("refund_status",refund);
+      if (["cancelled","confirmed","pending_payment"].includes(registration)) q=q.eq("registration_status",registration);
+      if (payment) q = q.eq("payment_status", payment);
+    }
+    const sort = params.get("sort");
+    if (vega || players) q = q.order("last_name").order("first_name");
+    else if (sort === "nzcf_desc") q = q.order("nzcf_rating", { ascending: false, nullsFirst: false });
     else if (sort === "fide_desc") q = q.order("fide_rating", { ascending: false, nullsFirst: false });
     else q = q.order("created_at", { ascending: false });
-    const rows = (await q).data || [];
+    const result = await q;
+    if (result.error) throw new Error("Unable to load tournament registrations. Check the selected filters and database setup.");
+    const rows = result.data || [];
     return rows.map((r: any) => ({ ...r, tournament_title: r.tournaments?.title }));
   }
 
@@ -146,8 +157,14 @@ export async function GET(req: Request) {
   const format = url.searchParams.get("format") || "csv";
   const preview = url.searchParams.get("preview") === "1";
   try {
+    if (format === "vega" && type !== "tournament_registrations") throw new Error("Vega export is for tournament registrations only.");
     const rows = await getRows(type, admin.profile.role, url.searchParams);
-    const keys = type === "tournament_registrations" && url.searchParams.get("report") === "players" ? PLAYER_REPORT_COLUMNS : selectedColumnKeys(url.searchParams.get("columns"), type);
+    if (format === "vega") {
+      if (!rows.length) throw new Error("No paid and confirmed players found for this tournament.");
+      const name = String(rows[0].tournament_title || "tournament").replace(/[^a-zA-Z0-9]+/g, "-").slice(0, 80);
+      return new NextResponse(toCsv(vegaPlayerRows(rows)), { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${name}-vega-players.csv"`, "Cache-Control": "no-store" } });
+    }
+    const keys = type === "tournament_registrations" && url.searchParams.get("report") === "players" ? PLAYER_REPORT_COLUMNS : selectedColumnKeys(url.searchParams.getAll("columns").join(","), type);
     const shaped = rowsForColumns(rows as any[], type, keys);
     const filename = url.searchParams.get("report") === "players" && type === "tournament_registrations" ? "tournament-players" : safeFileName(type);
     if (format === "pdf") {

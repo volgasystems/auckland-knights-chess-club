@@ -62,6 +62,7 @@ export const REPORT_COLUMNS: Record<ReportType, ReportColumn[]> = {
     { key: "player", label: "Name", value: (r) => `${r.first_name || ""} ${r.last_name || ""}`.trim() },
     { key: "email", label: "Email", value: (r) => r.email },
     { key: "phone", label: "Phone", value: (r) => r.phone },
+    { key: "gender", label: "Gender", value: (r) => r.gender || "" },
     { key: "club_school", label: "Club/School", value: (r) => r.club_name || r.school_name },
     { key: "nzcf_id", label: "NZCF ID", value: (r) => r.nzcf_id },
     { key: "nzcf_rating", label: "NZCF Rating", value: (r) => r.nzcf_rating },
@@ -149,4 +150,4 @@ export function buildReportPageQuery(base: Record<string, any>, keys: string[], 
   return query ? `?${query}` : "?";
 }
 
-export const PLAYER_REPORT_COLUMNS = ["player", "tournament", "dob", "fide_id", "fide_rating", "nzcf_id", "nzcf_rating", "club_school", "category", "email", "phone", "payment_status", "registration_status"];
+export const PLAYER_REPORT_COLUMNS = ["player", "tournament", "dob", "gender", "fide_id", "fide_rating", "nzcf_id", "nzcf_rating", "club_school", "category", "email", "phone", "payment_status", "registration_status"];

@@ -30,7 +30,7 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
   else if (sort === "fide_desc") q = q.order("fide_rating", { ascending: false, nullsFirst: false });
   else q = q.order("created_at", { ascending: false });
 
-  const { data } = await q;
+  const { data, error } = await q;
   const rows = data || [];
   const { data: tournaments } = await s.from("tournaments").select("id,title").order("title");
   const paid = rows.filter((r: any) => r.payment_status === "paid" && r.registration_status === "confirmed").length;
@@ -40,8 +40,6 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
   const withdrawalSchema=await s.from("tournament_registrations").select("withdrawn_at,refund_status").limit(1);
   const base = formBase(sp);
   const pdfPreview = buildReportQuery(base, "tournament_registrations", keys, "pdf", true);
-  const pdfDownload = buildReportQuery(base, "tournament_registrations", keys, "pdf");
-  const csvDownload = buildReportQuery(base, "tournament_registrations", keys, "csv");
   const showPdfPreviewUrl = buildReportPageQuery(base, keys, true);
   const hidePdfPreviewUrl = buildReportPageQuery(base, keys, false);
 
@@ -55,7 +53,8 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
       {withdrawalSchema.error&&<p role="alert" className="mt-3 text-sm text-red-700">Withdrawal setup required: run 20261102_tournament_withdrawals.sql in AKCC Supabase.</p>}
       <PaymentDiagnostics />
       <PaymentReminders ready={!reminderSchema.error} scheduled={!!process.env.CRON_SECRET && process.env.CRON_SECRET.length >= 32} tournamentId={sp.tournament_id} canSend={["admin","super_admin"].includes(admin.profile.role)} />
-      <form className="card mt-5 space-y-5 p-5">
+      <form method="get" className="card mt-5 space-y-5 p-5">
+        <input type="hidden" name="type" value="tournament_registrations"/>
         <div className="grid gap-3 md:grid-cols-4">
           <select name="tournament_id" defaultValue={sp.tournament_id || ""} className="admin-input"><option value="">All tournaments</option>{(tournaments || []).map((t: any) => <option key={t.id} value={t.id}>{t.title}</option>)}</select>
           <select name="payment_status" defaultValue={sp.payment_status || ""} className="admin-input"><option value="">All payment statuses</option><option value="paid">Paid</option><option value="pending_payment">Pending</option><option value="failed">Failed</option><option value="expired">Expired</option><option value="refunded">Refunded</option></select>
@@ -67,11 +66,14 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
         <div><p className="admin-label mb-2">Choose report columns</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{REPORT_COLUMNS.tournament_registrations.map((c) => <label key={c.key} className="flex items-center gap-2 rounded-lg border border-stone-200 p-2 text-sm">{["tournament", "phone"].includes(c.key) && <input type="hidden" name="columns" value={c.key}/>}<input type="checkbox" name="columns" value={c.key} defaultChecked={keys.includes(c.key)} disabled={["tournament", "phone"].includes(c.key)} />{c.label}</label>)}</div></div>
 
         <div className="flex flex-wrap gap-3">
-          <a href={csvDownload} className="btn-secondary py-2">Download CSV</a>
-          <a href={pdfDownload} className="btn-secondary py-2">Download PDF</a>
-          <PdfPreview src={pdfPreview} />
+          <button formAction="/api/admin/export" name="format" value="csv" className="btn-secondary py-2">Download CSV</button>
+          <button formAction="/api/admin/export" name="format" value="pdf" className="btn-secondary py-2">Download PDF</button>
+          <PdfPreview src={pdfPreview} liveForm />
+          <button formAction="/api/admin/export" name="format" value="vega" className="btn-secondary py-2">Download Vega Player CSV</button>
         </div>
+        <p className="text-xs text-stone-600">Vega CSV requires one tournament and exports only paid, confirmed players. Map its columns in your Vega import workflow.</p>
       </form>
+      {error && <p role="alert" className="mt-3 text-red-700">Could not load the selected report. Check the filters and database setup.</p>}
 
       <section className="mt-6 grid gap-4 md:grid-cols-4"><div className="card p-4"><p className="text-xs font-bold uppercase text-stone-500">Total entries</p><p className="mt-2 text-2xl font-extrabold">{rows.length}</p></div><div className="card p-4"><p className="text-xs font-bold uppercase text-stone-500">Confirmed paid</p><p className="mt-2 text-2xl font-extrabold text-green-700">{paid}</p></div><div className="card p-4"><p className="text-xs font-bold uppercase text-stone-500">Pending payment</p><p className="mt-2 text-2xl font-extrabold text-amber-700">{pending}</p></div><div className="card p-4"><p className="text-xs font-bold uppercase text-stone-500">Payments received</p><p className="mt-2 text-2xl font-extrabold">{formatMoney(totalAmount)}</p></div></section>
 
