@@ -1,3 +1,4 @@
+import VegaDownloadButton from "@/components/admin/VegaDownloadButton";
 import PaymentReminders from "@/components/admin/PaymentReminders";
 import { editableEntry } from "@/lib/tournamentEntryEditing";
 import PdfPreview from "@/components/admin/PdfPreview";
@@ -56,7 +57,7 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
       <form method="get" className="card mt-5 space-y-5 p-5">
         <input type="hidden" name="type" value="tournament_registrations"/>
         <div className="grid gap-3 md:grid-cols-4">
-          <select name="tournament_id" defaultValue={sp.tournament_id || ""} className="admin-input"><option value="">All tournaments</option>{(tournaments || []).map((t: any) => <option key={t.id} value={t.id}>{t.title}</option>)}</select>
+          <select aria-label="Tournament" name="tournament_id" defaultValue={sp.tournament_id || ""} className="admin-input"><option value="">All tournaments</option>{(tournaments || []).map((t: any) => <option key={t.id} value={t.id}>{t.title}</option>)}</select>
           <select name="payment_status" defaultValue={sp.payment_status || ""} className="admin-input"><option value="">All payment statuses</option><option value="paid">Paid</option><option value="pending_payment">Pending</option><option value="failed">Failed</option><option value="expired">Expired</option><option value="refunded">Refunded</option></select>
           <select name="sort" defaultValue={sort} className="admin-input"><option value="created_at_desc">Newest</option><option value="nzcf_desc">NZCF high-low</option><option value="fide_desc">FIDE high-low</option></select>
           <button className="btn-primary py-2">Preview Report</button>
@@ -69,7 +70,7 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
           <button formAction="/api/admin/export" name="format" value="csv" className="btn-secondary py-2">Download CSV</button>
           <button formAction="/api/admin/export" name="format" value="pdf" className="btn-secondary py-2">Download PDF</button>
           <PdfPreview src={pdfPreview} liveForm />
-          <button formAction="/api/admin/export" name="format" value="vega" className="btn-secondary py-2">Download Vega Player CSV</button>
+          <VegaDownloadButton />
         </div>
         <p className="text-xs text-stone-600">Vega CSV requires one tournament and exports only paid, confirmed players. Map its columns in your Vega import workflow.</p>
       </form>
