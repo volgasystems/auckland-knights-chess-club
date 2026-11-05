@@ -1,4 +1,4 @@
-const columns = ["Name", "Fed", "Birth date", "G", "Title", "ID FIDE", "Rtg FIDE", "K FIDE", "ID Nat", "Rtg Nat", "K Nat", "Origin", "S", "Info"];
+const columns = ["N", "Name", "Fed", "Birth date", "G", "Title", "ID FIDE", "Rtg FIDE", "K FIDE", "ID Nat", "Rtg Nat", "K Nat", "Origin", "S", "Info"];
 
 function cell(value: unknown) {
   const text = String(value ?? "").replace(/[\r\n]+/g, " ");
@@ -7,7 +7,8 @@ function cell(value: unknown) {
 
 /** Comma-separated player export in Vega's displayed column order. */
 export function vegaPlayerCsv(rows: any[]) {
-  const records = rows.map(r => [
+  const records = rows.map((r, i) => [
+    i + 1,
     [r.last_name, r.first_name].filter(Boolean).join(", "),
     r.federation,
     /^\d{4}/.exec(String(r.date_of_birth || ""))?.[0] || "0000.00.00",
