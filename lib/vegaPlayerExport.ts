@@ -1,14 +1,13 @@
-const columns = ["N", "Name", "Fed", "Birth date", "G", "Title", "ID FIDE", "Rtg FIDE", "K FIDE", "ID Nat", "Rtg Nat", "K Nat", "Origin", "S", "Info"];
+const columns = ["Name", "Fed", "Birth date", "G", "Title", "ID FIDE", "Rtg FIDE", "K FIDE", "ID Nat", "Rtg Nat", "K Nat", "Origin", "S", "Info"];
 
 function cell(value: unknown) {
   const text = String(value ?? "").replace(/[\r\n]+/g, " ");
-  return /[;"]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+  return /[,"]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
 }
 
-/** Semicolon-separated player export in Vega's displayed column order. */
+/** Comma-separated player export in Vega's displayed column order. */
 export function vegaPlayerCsv(rows: any[]) {
-  const records = rows.map((r, i) => [
-    i + 1,
+  const records = rows.map(r => [
     [r.last_name, r.first_name].filter(Boolean).join(", "),
     r.federation,
     /^\d{4}/.exec(String(r.date_of_birth || ""))?.[0] || "0000.00.00",
@@ -24,5 +23,5 @@ export function vegaPlayerCsv(rows: any[]) {
     "",
     "",
   ]);
-  return [columns, ...records].map(row => row.map(cell).join(";")).join("\n");
+  return [columns, ...records].map(row => row.map(cell).join(",")).join("\n");
 }

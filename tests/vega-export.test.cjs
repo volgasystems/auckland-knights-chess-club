@@ -6,7 +6,7 @@ test('Vega download isolates a tournament and paid confirmed players; normal CSV
  const get=(qs)=>api.GET(new Request('https://example.invalid/api/admin/export?type=tournament_registrations&'+qs));
  assert.equal((await get('format=vega')).status,400);
  const res=await get('format=vega&tournament_id='+id+'&entries=all');assert.equal(res.status,200);
- const csv=await res.text();assert.equal(csv.split('\n').length,2);assert.equal(csv.split('\n')[0], "N;Name;Fed;Birth date;G;Title;ID FIDE;Rtg FIDE;K FIDE;ID Nat;Rtg Nat;K Nat;Origin;S;Info");assert.equal(csv.split('\n')[1], "1;Player, Fixture;;2010;F;;1234;0;0;0;0;0;;;");assert.doesNotMatch(csv,/PRIVATE|example.invalid|Withdrawn|Other|Pending/);
+ const csv=await res.text();assert.equal(csv.split('\n').length,2);assert.equal(csv.split('\n')[0], "Name,Fed,Birth date,G,Title,ID FIDE,Rtg FIDE,K FIDE,ID Nat,Rtg Nat,K Nat,Origin,S,Info");assert.equal(csv.split('\n')[1], '"Player, Fixture",,2010,F,,1234,0,0,0,0,0,,,');assert.doesNotMatch(csv,/PRIVATE|example.invalid|Withdrawn|Other|Pending/);
  const report=await (await get('format=csv&tournament_id='+id+'&payment_status=pending_payment&columns=player&columns=gender&columns=dob')).text();
  assert.match(report.split('\n')[0],/Name,Gender,DOB/);assert.match(report,/Pending/);assert.doesNotMatch(report,/Withdrawn|Other/);
 });
