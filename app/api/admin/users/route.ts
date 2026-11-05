@@ -48,6 +48,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  if (body.action === "reset_password") {
+    const { id, password } = body;
+    if (typeof id !== "string" || !id || id === admin.profile.id) {
+      return NextResponse.json({ error: "Select another admin user." }, { status: 400 });
+    }
+    if (typeof password !== "string" || password.trim().length < 8) {
+      return NextResponse.json({ error: "Enter a password with at least 8 characters." }, { status: 400 });
+    }
+    const { data: target, error: lookupError } = await s.from("profiles").select("id").eq("id", id).maybeSingle();
+    if (lookupError) return NextResponse.json({ error: "Unable to look up this user." }, { status: 500 });
+    if (!target) return NextResponse.json({ error: "User not found." }, { status: 404 });
+    const { error } = await s.auth.admin.updateUserById(target.id, { password });
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ ok: true });
+  }
+
   const { id, role, is_active, first_name, last_name } = body;
   if (!id) return NextResponse.json({ error: "Missing user id." }, { status: 400 });
   if (!ROLES.includes(role)) return NextResponse.json({ error: "Invalid role." }, { status: 400 });

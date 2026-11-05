@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AREA_LABELS, ROLES, ROLE_LABELS, roleAreas } from "@/lib/roles";
 
-export default function UsersManager() {
+export default function UsersManager({ currentUserId }: { currentUserId: string }) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -10,11 +10,54 @@ export default function UsersManager() {
   const [creating, setCreating] = useState(false);
   const [newUser, setNewUser] = useState({ first_name: "", last_name: "", email: "", password: "", role: "admin" });
 
+  const [loadError, setLoadError] = useState("");
+  const [resetTarget, setResetTarget] = useState<{ id: string; email: string } | null>(null);
+  const [password, setPassword] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [notice, setNotice] = useState("");
+
   async function load() {
-    const res = await fetch("/api/admin/users");
-    const json = await res.json();
-    setUsers(json.users || []);
-    setLoading(false);
+    setLoading(true);
+    setLoadError("");
+    try {
+      const res = await fetch("/api/admin/users", { cache: "no-store" });
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("Sign in again with a Super Admin account to view users.");
+      }
+      if (!res.ok) throw new Error("Could not load users. Click Refresh to try again.");
+      const json = await res.json();
+      if (!Array.isArray(json.users)) throw new Error("Unexpected response. Sign in again and retry.");
+      setUsers(json.users);
+    } catch (error) {
+      setUsers([]);
+      setLoadError(error instanceof Error ? error.message : "Could not load users.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resetTarget || resetting) return;
+    setResetting(true);
+    setResetError("");
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reset_password", id: resetTarget.id, password }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.ok) throw new Error(result.error || "Unable to reset password.");
+      setNotice(`Password reset for ${resetTarget.email}. Share the new password privately.`);
+      setResetTarget(null);
+      setPassword("");
+    } catch (error) {
+      setResetError(error instanceof Error ? error.message : "Unable to reset password.");
+    } finally {
+      setResetting(false);
+    }
   }
   useEffect(() => { load(); }, []);
 
@@ -58,7 +101,7 @@ export default function UsersManager() {
     [users, search]
   );
 
-  if (loading) return <p>Loading users...</p>;
+
 
   return (
     <div>
@@ -74,6 +117,23 @@ export default function UsersManager() {
           <button onClick={load} className="btn-secondary">Refresh</button>
         </div>
       </div>
+
+      {notice && <p role="status" className="mt-4 text-green-800">{notice}</p>}
+      {loadError && <p role="alert" className="mt-4 text-red-700">{loadError}</p>}
+      {resetTarget && (
+        <form onSubmit={resetPassword} className="card mt-5 p-5">
+          <h2 className="text-xl font-bold">Reset password for {resetTarget.email}</h2>
+          <label className="mt-3 block max-w-md">
+            <span className="admin-label">New password (at least 8 characters)</span>
+            <input autoComplete="new-password" type="password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} className="admin-input mt-1" />
+          </label>
+          {resetError && <p role="alert" className="mt-2 text-red-700">{resetError}</p>}
+          <div className="mt-4 flex gap-2">
+            <button className="btn-primary" disabled={resetting}>{resetting ? "Resetting..." : "Set New Password"}</button>
+            <button type="button" className="btn-secondary" disabled={resetting} onClick={() => { setResetTarget(null); setPassword(""); }}>Cancel</button>
+          </div>
+        </form>
+      )}
 
       {showAdd && (
         <form onSubmit={createUser} className="card mt-6 p-5">
@@ -107,6 +167,7 @@ export default function UsersManager() {
             </tr>
           </thead>
           <tbody>
+            {filtered.length === 0 && <tr><td colSpan={7} className="p-3">{loading ? "Loading users..." : loadError ? "User list unavailable." : search ? "No users match your search." : "No users found."}</td></tr>}
             {filtered.map((u) => (
               <tr key={u.id} className="border-t align-top">
                 <td className="p-3"><input defaultValue={u.first_name || ""} id={`first-${u.id}`} className="admin-input w-32" /></td>
@@ -129,6 +190,7 @@ export default function UsersManager() {
                     >
                       Save/Edit
                     </button>
+                    {u.id !== currentUserId && <button disabled={resetting} onClick={() => { setResetTarget({ id: u.id, email: u.email }); setPassword(""); setResetError(""); setNotice(""); }} className="btn-secondary py-2">Reset Password</button>}
                     <button onClick={() => remove(u.id, u.email)} className="rounded-md bg-red-700 px-4 py-2 font-bold text-white hover:bg-red-800">Remove</button>
                   </div>
                 </td>

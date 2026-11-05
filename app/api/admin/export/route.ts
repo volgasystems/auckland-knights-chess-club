@@ -1,4 +1,4 @@
-import { vegaPlayerRows } from "@/lib/vegaPlayerExport";
+import { vegaPlayerCsv } from "@/lib/vegaPlayerExport";
 import { applyMemberSearch } from "@/lib/memberSearch";
 import { NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/auth";
@@ -162,7 +162,7 @@ export async function GET(req: Request) {
     if (format === "vega") {
       if (!rows.length) throw new Error("No paid and confirmed players found for this tournament.");
       const name = String(rows[0].tournament_title || "tournament").replace(/[^a-zA-Z0-9]+/g, "-").slice(0, 80);
-      return new NextResponse(toCsv(vegaPlayerRows(rows)), { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${name}-vega-players.csv"`, "Cache-Control": "no-store" } });
+      return new NextResponse(vegaPlayerCsv(rows), { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${name}-vega-players.csv"`, "Cache-Control": "no-store" } });
     }
     const keys = type === "tournament_registrations" && url.searchParams.get("report") === "players" ? PLAYER_REPORT_COLUMNS : selectedColumnKeys(url.searchParams.getAll("columns").join(","), type);
     const shaped = rowsForColumns(rows as any[], type, keys);
