@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import PageShell from "@/components/PageShell";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { formatDate } from "@/lib/format";
@@ -37,6 +38,7 @@ export default async function ResultsPage() {
                 <p>{displayTournamentSystem(t)} · {displayRatingType(t)}</p>
               </div>}
               <p className="text-lg text-stone-800">{t.lichess_url && <><a className="underline" target="_blank" rel="noreferrer" href={t.lichess_url}>Lichess broadcast</a></>}{t.pgn_url && <> – <a className="underline" target="_blank" rel="noreferrer" href={t.pgn_url}>PGN</a></>}{t.vega_url && <> – <a className="underline" target="_blank" rel="noreferrer" href={t.vega_url}>Vega page</a></>}</p>
+              <a className="mt-4 inline-block underline" href="/photo-gallery">View event photo albums</a>
               <p className="mt-3 whitespace-pre-line text-stone-700">{t.result_summary || t.description || "Result details will be published soon."}</p>
               <div className="mt-4 grid gap-1 text-sm text-stone-800">
                 <p><b>1st:</b> {t.first_place_name || "TBC"}</p>
