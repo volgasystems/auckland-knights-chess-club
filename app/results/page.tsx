@@ -1,3 +1,4 @@
+import { withPublishedAwards } from "@/lib/inauguralPrizewinners";
 export const dynamic = "force-dynamic";
 import PageShell from "@/components/PageShell";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -14,7 +15,8 @@ export default async function ResultsPage() {
     .or("status.in.(completed,archived),winner_photo_url.not.is.null,first_place_name.not.is.null,vega_url.not.is.null,result_summary.not.is.null")
     .order("start_date", { ascending: false });
   const byYear = new Map<number, any[]>();
-  for (const t of data || []) {
+  for (const record of data || []) {
+    const t = withPublishedAwards(record);
     const y = yearOf(t);
     byYear.set(y, [...(byYear.get(y)||[]), t]);
   }
@@ -40,12 +42,12 @@ export default async function ResultsPage() {
               <p className="text-lg text-stone-800">{t.lichess_url && <><a className="underline" target="_blank" rel="noreferrer" href={t.lichess_url}>Lichess broadcast</a></>}{t.pgn_url && <> – <a className="underline" target="_blank" rel="noreferrer" href={t.pgn_url}>PGN</a></>}{t.vega_url && <> – <a className="underline" target="_blank" rel="noreferrer" href={t.vega_url}>Vega page</a></>}</p>
               <a className="mt-4 inline-block underline" href="/photo-gallery">View event photo albums</a>
               <p className="mt-3 whitespace-pre-line text-stone-700">{t.result_summary || t.description || "Result details will be published soon."}</p>
-              <div className="mt-4 grid gap-1 text-sm text-stone-800">
+              {Array.isArray(t.tournament_prizes) && t.tournament_prizes.some((p:any)=>p.winner_name) ? <div className="mt-5 overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-amber-100"><tr><th className="p-3">Category</th><th className="p-3">Award</th><th className="p-3">Prizewinner</th><th className="p-3">Points / rounds</th></tr></thead><tbody>{t.tournament_prizes.filter((p:any)=>p.winner_name).map((p:any,i:number)=><tr key={i} className={i%2 ? "bg-slate-100" : "bg-white"}><td className="p-3">{p.category}</td><td className="p-3">{p.position}</td><td className="p-3 font-semibold">{/^https?:\/\//i.test(p.profile_url || "") ? <a className="underline" href={p.profile_url} target="_blank" rel="noreferrer">{p.winner_name}</a> : p.winner_name}</td><td className="p-3">{p.points !== null && p.points !== undefined && p.points !== "" ? `${p.points}/${t.rounds || "—"}` : "—"}</td></tr>)}</tbody></table></div> : <div className="mt-4 grid gap-1 text-sm text-stone-800">
                 <p><b>1st:</b> {t.first_place_name || "TBC"}</p>
                 <p><b>2nd:</b> {t.second_place_name || "TBC"}</p>
                 <p><b>3rd:</b> {t.third_place_name || "TBC"}</p>
                 {t.prize_details && <p><b>Prize:</b> {t.prize_details}</p>}
-              </div>
+              </div>}
             </article>)}
           </div>
         </section>)}

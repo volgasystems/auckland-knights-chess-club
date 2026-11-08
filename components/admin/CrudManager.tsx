@@ -21,7 +21,7 @@ type Field = {
 };
 
 type CategoryRow = { key: string; name: string; fee_cents: number | string; max_players?: number | string; prize?: string; __money_is_dollars?: boolean };
-type PrizeRow = { position: string; category: string; prize: string; amount_cents?: number | string; __money_is_dollars?: boolean };
+type PrizeRow = { points?: number | string; winner_name?: string; profile_url?: string; position: string; category: string; prize: string; amount_cents?: number | string; __money_is_dollars?: boolean };
 
 function centsToDollars(value: any) {
   const n = Number(value || 0);
@@ -63,6 +63,9 @@ function normaliseCategoryRows(value: any): CategoryRow[] {
 function normalisePrizeRows(value: any): PrizeRow[] {
   if (!Array.isArray(value)) return [];
   return value.map((row: any) => ({
+    points: row.points ?? "",
+    winner_name: row.winner_name || "",
+    profile_url: row.profile_url || "",
     position: row.position || row.rank || "",
     category: row.category || "",
     prize: row.prize || row.prize_details || "",
@@ -88,8 +91,8 @@ function PrizeEditor({ value, onChange }: { value: PrizeRow[]; onChange: (rows: 
   function add() { onChange([...rows, { position: "", category: "", prize: "", amount_cents: "" }]); }
   function remove(index: number) { onChange(rows.filter((_, i) => i !== index)); }
   return <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><span className="admin-label">Prize Fund / Winners</span><p className="mt-1 text-xs text-slate-600">Click Add Prize for each prize. Useful when each tournament has different prizes.</p></div><button type="button" onClick={add} className="btn-gold py-2">+ Add Prize</button></div>
-    {rows.length === 0 ? <p className="mt-4 rounded-lg bg-white p-3 text-sm text-slate-600">No prize rows added yet.</p> : <div className="mt-4 overflow-x-auto rounded-lg border border-amber-200 bg-white"><table className="w-full min-w-[760px] text-sm"><thead className="bg-amber-100 text-left"><tr><th className="p-3">Position / Award</th><th className="p-3">Category</th><th className="p-3">Prize description</th><th className="p-3">Amount ($) optional</th><th className="p-3">Action</th></tr></thead><tbody>{rows.map((row, index) => <tr key={index} className="border-t align-top"><td className="p-3"><input value={row.position} onChange={(e) => update(index, { position: e.target.value })} placeholder="1st / Best Junior" className="admin-input" /></td><td className="p-3"><input value={row.category} onChange={(e) => update(index, { category: e.target.value })} placeholder="Open / Junior U12" className="admin-input" /></td><td className="p-3"><input value={row.prize} onChange={(e) => update(index, { prize: e.target.value })} placeholder="$300 / Trophy / Medal" className="admin-input" /></td><td className="p-3"><input type="number" min="0" step="0.01" value={row.amount_cents || ""} onChange={(e) => update(index, { amount_cents: e.target.value })} placeholder="300" className="admin-input" /></td><td className="p-3"><button type="button" onClick={() => remove(index)} className="font-bold text-red-700">Remove</button></td></tr>)}</tbody></table></div>}
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><span className="admin-label">Prize Fund / Winners</span><p className="mt-1 text-xs text-slate-600">Add one row per award: category (Boys, Girls or an age group), position, winner and optional player profile link. Leave winner blank until results are final.</p></div><button type="button" onClick={add} className="btn-gold py-2">+ Add Prize</button></div>
+    {rows.length === 0 ? <p className="mt-4 rounded-lg bg-white p-3 text-sm text-slate-600">No prize rows added yet.</p> : <div className="mt-4 overflow-x-auto rounded-lg border border-amber-200 bg-white"><table className="w-full min-w-[760px] text-sm"><thead className="bg-amber-100 text-left"><tr><th className="p-3">Position / Award</th><th className="p-3">Category</th><th className="p-3">Points</th><th className="p-3">Winner name</th><th className="p-3">Player profile URL</th><th className="p-3">Prize description</th><th className="p-3">Amount ($) optional</th><th className="p-3">Action</th></tr></thead><tbody>{rows.map((row, index) => <tr key={index} className="border-t align-top"><td className="p-3"><input value={row.position} onChange={(e) => update(index, { position: e.target.value })} placeholder="1st / Best Junior" className="admin-input" /></td><td className="p-3"><input value={row.category} onChange={(e) => update(index, { category: e.target.value })} placeholder="Open / Junior U12" className="admin-input" /></td><td className="p-3"><input type="number" min="0" step="0.5" aria-label={`Points ${index + 1}`} value={row.points ?? ""} onChange={(e)=>update(index,{points:e.target.value})} className="admin-input" /></td><td className="p-3"><input aria-label={`Winner name ${index + 1}`} value={row.winner_name || ""} onChange={(e) => update(index, { winner_name: e.target.value })} className="admin-input" /></td><td className="p-3"><input type="url" aria-label={`Player profile URL ${index + 1}`} value={row.profile_url || ""} onChange={(e) => update(index, { profile_url: e.target.value })} className="admin-input" /></td><td className="p-3"><input value={row.prize} onChange={(e) => update(index, { prize: e.target.value })} placeholder="$300 / Trophy / Medal" className="admin-input" /></td><td className="p-3"><input type="number" min="0" step="0.01" value={row.amount_cents || ""} onChange={(e) => update(index, { amount_cents: e.target.value })} placeholder="300" className="admin-input" /></td><td className="p-3"><button type="button" onClick={() => remove(index)} className="font-bold text-red-700">Remove</button></td></tr>)}</tbody></table></div>}
   </div>;
 }
 
@@ -134,7 +137,7 @@ export default function CrudManager({ table, title, fields, rows, meetingLabels,
       if (f.type === "money" && payload[f.name] !== "" && payload[f.name] !== null) payload[f.name] = dollarsToCents(payload[f.name]);
       if (f.type === "json") { try { payload[f.name] = payload[f.name] ? JSON.parse(payload[f.name]) : []; } catch { setLoading(false); alert(`${f.label} must be valid JSON.`); return; } }
       if (f.type === "categories") payload[f.name] = normaliseCategoryRows(payload[f.name]).filter((c) => c.name.trim()).map((c) => ({ key: c.key || c.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""), name: c.name, fee_cents: dollarsToCents(c.fee_cents), max_players: c.max_players ? Number(c.max_players) : null, prize: c.prize || "" }));
-      if (f.type === "prizes") payload[f.name] = normalisePrizeRows(payload[f.name]).filter((p) => p.position.trim() || p.prize.trim()).map((p) => ({ position: p.position, category: p.category, prize: p.prize, amount_cents: p.amount_cents ? dollarsToCents(p.amount_cents) : null }));
+      if (f.type === "prizes") payload[f.name] = normalisePrizeRows(payload[f.name]).filter((p) => p.position.trim() || p.prize.trim()).map((p) => ({ points: p.points === "" || p.points === undefined ? null : Number(p.points), winner_name: p.winner_name || "", profile_url: /^https?:\/\//i.test(p.profile_url || "") ? p.profile_url : "", position: p.position, category: p.category, prize: p.prize, amount_cents: p.amount_cents ? dollarsToCents(p.amount_cents) : null }));
       if (f.type === "multi_options") payload[f.name] = Array.isArray(payload[f.name]) ? payload[f.name] : [];
     }
     try {
