@@ -1,3 +1,4 @@
+import DailyPuzzle from "@/components/DailyPuzzle";
 import { pageMetadata } from "@/lib/seo";
 const homeTitle = "Auckland Knights Chess Club | Auckland, NZ";
 const homeMetadata = pageMetadata("Auckland, NZ", "Auckland Knights Chess Club welcomes children and adults, from beginners to experienced players, for chess coaching, friendly games, tournaments and community events in Auckland.", "/");
@@ -30,7 +31,6 @@ export default async function HomePage() {
     service.from("gallery_photos").select("*").eq("is_published", true).order("event_date", { ascending: false }).order("created_at", { ascending: false })
   ]);
   const mapAddress = settings?.club_address || "East Auckland, New Zealand";
-  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapAddress)}&output=embed`;
 
   return <PageShell>
     <Hero />
@@ -67,12 +67,10 @@ export default async function HomePage() {
         <div className="card p-6">
           <h2 className="text-2xl font-extrabold">Find Us</h2>
           <p className="mt-3 text-stone-700">{mapAddress}</p>
-          <p className="mt-3 text-sm text-stone-500">The map updates automatically from the Club Settings address.</p>
+          <p className="mt-3 text-sm text-stone-500">Visit our contact page for directions and the club location map.</p>
           <Link href="/contact" className="btn-secondary mt-5">Contact Us</Link>
         </div>
-        <div className="card overflow-hidden">
-          <iframe title="Club location map" src={mapSrc} className="h-80 w-full border-0" loading="lazy" />
-        </div>
+        <DailyPuzzle />
       </section>
     </main>
     <StayConnected settings={settings} />
