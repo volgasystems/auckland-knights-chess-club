@@ -37,8 +37,9 @@ export default async function HomePage() {
     <FeatureStrip />
     <main className="container-page py-10">
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-stone-100 p-5"><p className="font-bold">Already a member? Find your member record or renew your annual membership.</p><Link href="/join#membership-search" className="btn-primary">Find Member / Renew Membership</Link></div>
-      <div className="grid gap-8 lg:grid-cols-3">
-        <section className="lg:col-span-2">
+      <div className="grid items-start gap-8 lg:grid-cols-3">
+        <div className="space-y-8 lg:col-span-2">
+        <section>
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-extrabold uppercase tracking-wide">Upcoming Tournaments</h2>
@@ -48,6 +49,15 @@ export default async function HomePage() {
           </div>
           {(tournaments || []).length > 0 ? <HomeTournamentsList tournaments={tournaments || []} /> : <div className="card p-5 text-sm text-stone-600">No public tournaments are published yet.</div>}
         </section>
+      <section><div className="flex items-center justify-between gap-4"><h2 className="text-2xl font-extrabold">Event Photo Gallery</h2><Link href="/photo-gallery" className="font-bold">View All Events</Link></div>{galleryPhotos?.length ? <GalleryAlbums albums={galleryAlbums(galleryPhotos).slice(0, 3)} maxColumns={2} /> : <p className="card mt-5 p-5 text-stone-600">Event albums will appear here when photos are published.</p>}</section>
+        <div className="card p-6">
+          <h2 className="text-2xl font-extrabold">Find Us</h2>
+          <p className="mt-3 text-stone-700">{mapAddress}</p>
+          <p className="mt-3 text-sm text-stone-500">Visit our contact page for directions and the club location map.</p>
+          <Link href="/contact" className="btn-secondary mt-5">Contact Us</Link>
+        </div>
+        </div>
+        <div className="space-y-6">
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-extrabold uppercase tracking-wide">Latest News</h2>
@@ -61,17 +71,10 @@ export default async function HomePage() {
             {(!news || news.length === 0) && <div className="card p-5 text-sm text-stone-600">No news has been published yet.</div>}
           </div>
         </section>
-      </div>
-      <section className="mt-10"><div className="flex items-center justify-between gap-4"><h2 className="text-2xl font-extrabold">Event Photo Gallery</h2><Link href="/photo-gallery" className="font-bold">View All Events</Link></div>{galleryPhotos?.length ? <GalleryAlbums albums={galleryAlbums(galleryPhotos).slice(0, 3)} /> : <p className="card mt-5 p-5 text-stone-600">Event albums will appear here when photos are published.</p>}</section>
-      <section className="mt-10 grid gap-6 lg:grid-cols-2">
-        <div className="card p-6">
-          <h2 className="text-2xl font-extrabold">Find Us</h2>
-          <p className="mt-3 text-stone-700">{mapAddress}</p>
-          <p className="mt-3 text-sm text-stone-500">Visit our contact page for directions and the club location map.</p>
-          <Link href="/contact" className="btn-secondary mt-5">Contact Us</Link>
-        </div>
         <DailyPuzzle />
-      </section>
+
+        </div>
+      </div>
     </main>
     <StayConnected settings={settings} />
   </PageShell>
