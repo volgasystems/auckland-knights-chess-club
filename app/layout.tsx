@@ -1,3 +1,4 @@
+import CleanTrackingUrl from "@/components/CleanTrackingUrl";
 import { publicClubSettings } from "@/lib/publicClubSettings";
 import { clubStructuredData } from "@/lib/clubIdentity";
 import type { Metadata } from "next";
@@ -30,7 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const settings = await publicClubSettings();
   return (
     <html lang="en-NZ">
-      <body><StructuredData data={clubStructuredData(settings)} /><PWARegister />{children}</body>
+      <body><CleanTrackingUrl /><StructuredData data={clubStructuredData(settings)} /><PWARegister />{children}</body>
     </html>
   );
 }
